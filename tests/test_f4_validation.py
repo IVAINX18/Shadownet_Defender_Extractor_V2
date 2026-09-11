@@ -31,7 +31,7 @@ if str(_PROJECT_ROOT) not in sys.path:
 _MANIFEST_REAL = _PROJECT_ROOT / "data" / "eval_real" / "manifest.csv"
 _MANIFEST_OVERLAY = _PROJECT_ROOT / "samples" / "overlay_corpus" / "manifest.csv"
 _METRICS_JSON = _PROJECT_ROOT / "evaluation" / "metrics.json"
-_SCALER_PATH = _PROJECT_ROOT / "models" / "scaler.pkl"
+_SCALER_PATH = _PROJECT_ROOT / "models" / "scaler_ember_v1.1.pkl"
 _X_TEST_SYNTHETIC = _PROJECT_ROOT / "data" / "test_set" / "X_test.npy"
 
 # ─── Condiciones de skip ──────────────────────────────────────────────────────
@@ -111,7 +111,7 @@ def test_corpus_manifest_dqs():
 
 @pytest.mark.skipif(
     _SCALER_ABSENT,
-    reason="Scaler no encontrado en models/scaler.pkl",
+    reason="Scaler no encontrado en models/scaler_ember_v1.1.pkl",
 )
 def test_scaler_drift_real_vs_synthetic():
     """

@@ -31,11 +31,11 @@ El malware no tiene firma YARA conocida en las reglas actuales. Esta es la prime
 
 ---
 
-## Fase 2 — Feature Extractor (2381 dims)
+## Fase 2 — Feature Extractor (2381 dims + OVERLAY_6)
 
 ```
 Modo:              PE_FASTLOAD
-Tiempo:            783.9 ms (archivo >10 MB, muestreo distribuido)
+Tiempo:            ~1.4 s (ruta EMBER canónica sobre bytes completos)
 Packer detectado:  True
 ```
 
@@ -65,17 +65,17 @@ Hay 145 imports y 0 exports — la estructura PE tiene una superficie de API vis
 ## Fase 3 — ML / ONNX Inference
 
 ```
-ML score:     0.0000
-ML label:     BENIGN
+ML score:     0.0913
+ML label:     BENIGN (solo-ML, umbral 0.5)
 Confidence:   High
 Threshold:    0.5
 ```
 
-El modelo neuronal asigna probabilidad prácticamente nula de ser malware. Esta es la evasión confirmada: la estructura PE del archivo es suficientemente similar a archivos benignos en el espacio de features de 2381 dimensiones.
+El modelo neuronal asigna probabilidad baja de ser malware. Esta es la evasión confirmada: la estructura PE del archivo es suficientemente similar a archivos benignos en el espacio de features de 2387 dimensiones.
 
 La razón probable es que:
 1. El PE header y secciones declaradas (~266 KB) tienen características similares a un binario benigno.
-2. El overlay de 19.7 MB no está suficientemente representado en el vector de features porque el muestreo PE_FASTLOAD prioriza la estructura PE declarada.
+2. El overlay de 19.7 MB sí queda representado en OVERLAY_6 (vía slack del bloque General), pero su peso no basta para superar el umbral de 0.5.
 3. La alta entropía global sí contribuye a las features de ByteEntropy, pero aparentemente no fue suficiente para superar el umbral de 0.5.
 
 ---

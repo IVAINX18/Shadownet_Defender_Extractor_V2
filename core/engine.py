@@ -38,7 +38,8 @@ from configs.settings import (
     HIGH_CONFIDENCE_THRESHOLD,
     MALWARE_THRESHOLD,
     MODEL_PATH,
-    SCALER_PATH,
+    SCALER_EMBER_PATH,
+    SCALER_OVERLAY_PATH,
 )
 from core.errors import NonPEFileError
 from core.overlay import OverlayAnalyzer
@@ -1229,7 +1230,7 @@ class ShadowNetEngine:
     def _load_model(self) -> None:
         """Carga el modelo ONNX. No lanza excepción para permitir inicio parcial."""
         try:
-            self.model = ShadowNetModel(MODEL_PATH, SCALER_PATH)
+            self.model = ShadowNetModel(MODEL_PATH, SCALER_EMBER_PATH, SCALER_OVERLAY_PATH)
             logger.info("Modelo ONNX cargado correctamente.")
         except Exception as exc:
             logger.critical(

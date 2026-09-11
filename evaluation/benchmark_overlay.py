@@ -31,12 +31,15 @@ if str(_PROJECT_ROOT) not in sys.path:
 
 import numpy as np
 
+from models.features_v1_1 import build_features_2387
+
 # ─── Constantes ───────────────────────────────────────────────────────────────
 
 CORPUS_DIR = _PROJECT_ROOT / "samples" / "overlay_corpus"
 MANIFEST_FNAME = "manifest.csv"
-SCALER_PATH = _PROJECT_ROOT / "models" / "scaler.pkl"
-MODEL_PATH = _PROJECT_ROOT / "models" / "best_model.onnx"
+SCALER_EMBER_PATH = _PROJECT_ROOT / "models" / "scaler_ember_v1.1.pkl"
+SCALER_OVERLAY_PATH = _PROJECT_ROOT / "models" / "scaler_overlay_v1.1.pkl"
+MODEL_PATH = _PROJECT_ROOT / "models" / "shadow_net_sorel_7m_v1.1.onnx"
 EVAL_REAL_DIR = _PROJECT_ROOT / "data" / "eval_real"
 METRICS_OUT = _PROJECT_ROOT / "evaluation" / "metrics.json"
 FIGURES_DIR = _PROJECT_ROOT / "docs" / "academico" / "figures"
@@ -147,7 +150,7 @@ def mcnemar_test(b: int, c: int) -> tuple[float, float]:
 
 # ─── FPR guardrail sobre benignos de eval_real ────────────────────────────────
 
-def measure_guardrail_fpr(session, scaler, eval_real_dir: Path) -> Optional[dict]:
+def measure_guardrail_fpr(session, scaler_ember, scaler_overlay, eval_real_dir: Path) -> Optional[dict]:
     """
     Mide FPR del sistema híbrido sobre benignos de data/eval_real.
     Devuelve None si eval_real no está disponible.
@@ -186,8 +189,8 @@ def measure_guardrail_fpr(session, scaler, eval_real_dir: Path) -> Optional[dict
             features = extractor.extract_features(str(candidates[0]))
             if len(features) != FEATURE_DIM:
                 continue
-            X_s = scaler.transform([features])
-            score_ml = ort_predict_single(session, X_s[0])
+            X_s = build_features_2387(features, scaler_ember, scaler_overlay)
+            score_ml = ort_predict_single(session, X_s)
             if score_ml >= 0.5:
                 fp_ml += 1
             result = engine.scan_file(str(candidates[0]))
@@ -320,7 +323,8 @@ def benchmark(corpus_dir: Path) -> dict:
 
     import joblib
     import onnxruntime as ort
-    scaler = joblib.load(str(SCALER_PATH))
+    scaler_ember = joblib.load(str(SCALER_EMBER_PATH))
+    scaler_overlay = joblib.load(str(SCALER_OVERLAY_PATH))
     session = ort.InferenceSession(str(MODEL_PATH))
 
     try:
@@ -347,8 +351,8 @@ def benchmark(corpus_dir: Path) -> dict:
                 continue
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
-                X_scaled = scaler.transform([features])
-            score_ml = ort_predict_single(session, X_scaled[0])
+                X_scaled = build_features_2387(features, scaler_ember, scaler_overlay)
+            score_ml = ort_predict_single(session, X_scaled)
             correct_ml = score_ml >= 0.5  # GT=malware para todo overlay corpus
 
             result = engine.scan_file(str(sample_path))
@@ -380,7 +384,7 @@ def benchmark(corpus_dir: Path) -> dict:
           + ("✅ p<α" if p_value < ALPHA else "⚠️  p≥α"))
 
     # Guardrail FPR sobre benignos de eval_real
-    guardrail = measure_guardrail_fpr(session, scaler, EVAL_REAL_DIR)
+    guardrail = measure_guardrail_fpr(session, scaler_ember, scaler_overlay, EVAL_REAL_DIR)
     if guardrail:
         gok = guardrail["guardrail_ok"]
         print(f"       Guardrail FPR: diff={guardrail['FPR_diff']:+.4f}  "

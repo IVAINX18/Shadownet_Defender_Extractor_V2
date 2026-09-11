@@ -45,6 +45,7 @@ def create_manifest_from_artifacts(
     version: str,
     threshold: float = 0.5,
     model_format: str = "onnx",
+    feature_dim: int = 2387,
 ) -> Dict:
     created_at = datetime.now(timezone.utc).isoformat()
     artifacts = []
@@ -69,7 +70,7 @@ def create_manifest_from_artifacts(
             "version": version,
             "format": model_format,
             "threshold": threshold,
-            "feature_dim": 2381,
+            "feature_dim": feature_dim,
             "created_at_utc": created_at,
         },
         "artifacts": artifacts,

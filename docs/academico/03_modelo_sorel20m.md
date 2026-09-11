@@ -1,7 +1,7 @@
 # Modelo ML — SOREL-20M y Arquitectura Neuronal
 
 > Fuente: `models/model_manifest.json`, `models/inference.py`, `extractors/extractor.py`,
-> auditoría directa de artefactos en `models/`. Ejecutado 2026-08-18.
+> auditoría directa de artefactos en `models/`. Actualizado 2026-09-11 al modelo v1.1.0.
 
 ---
 
@@ -10,9 +10,9 @@
 SOREL-20M (Sophos/ReversingLabs Open Dataset, 20 Million samples) es uno de los conjuntos de datos de malware más grandes disponibles públicamente. Contiene aproximadamente 20 millones de muestras de archivos PE con metadatos, features pre-extraídas y etiquetas de clasificación binaria (benign/malware).
 
 El modelo de ShadowNet Defender fue entrenado sobre:
-- **Dataset base**: SOREL-20M (~5 millones de muestras utilizadas)
-- **Dataset propio**: Colección ShadowNet 2024-2026 (~100K muestras adicionales)
-- **Total declarado**: ~5.1 millones de muestras de entrenamiento
+- **Dataset base**: SOREL-20M (selección 7M, seed 42; 4 187 321 malware / 2 812 679 benignos)
+- **Split**: temporal 6.300.000 train / 700.000 val
+- **Total**: 7.000.000 muestras de entrenamiento
 
 > NOTA: Los datos de entrenamiento no están incluidos en el repositorio.
 > Las métricas de entrenamiento son las declaradas en el manifiesto y documentación del proyecto.
@@ -27,8 +27,9 @@ El extractor produce un vector de 2381 dimensiones derivado de análisis estáti
 ```
 [ByteHistogram: 256] [ByteEntropy: 256] [Strings: 104]
 [General: 10] [Header: 62] [Section: 255]
-[Imports: 1280] [Exports: 128]
-Total: 256+256+104+10+62+255+1280+128 = 2381
+[Imports: 1280] [Exports: 128] [DataDirectories: 30]
+Total EMBER: 256+256+104+10+62+255+1280+128+30 = 2381
++ OVERLAY_6 → entrada del modelo: 2387
 ```
 
 ### Justificación del diseño de features
@@ -39,26 +40,26 @@ Total: 256+256+104+10+62+255+1280+128 = 2381
 
 **Strings (104)**: Features derivadas de strings extraídos del binario. Incluye indicadores de comportamiento: URLs, dominios, APIs Windows de riesgo, registry keys de persistencia, comandos de shell.
 
-**Imports (1280)**: Feature hashing de la Import Address Table (IAT). Cada API importada se hashea con SHA-256 y se mapea a un índice mediante módulo 1280. Las APIs de alto riesgo (VirtualAlloc, WriteProcessMemory, CreateRemoteThread) dejan huella estadística consistente entre familias de malware.
+**Imports (1280)**: Feature hashing de la Import Address Table (IAT) con murmurhash (`FeatureHasher`: 256 librerías + 1024 funciones). Las APIs de alto riesgo (VirtualAlloc, WriteProcessMemory, CreateRemoteThread) dejan huella estadística consistente entre familias de malware.
 
 ---
 
 ## Arquitectura neuronal
 
 ```
-Input layer:   2381 neuronas (vector de features normalizado)
+Input layer:   2387 neuronas (2381 EMBER + 6 OVERLAY, normalizado por bloques)
 Hidden 1:       512 neuronas + BatchNorm + ReLU + Dropout(p=0.3)
 Hidden 2:       256 neuronas + BatchNorm + ReLU + Dropout(p=0.2)
 Hidden 3:       128 neuronas + BatchNorm + ReLU + Dropout(p=0.1)
 Output:           1 neurona + Sigmoid → score ∈ [0.0, 1.0]
 ```
 
-**Parámetros de entrenamiento declarados:**
-- Framework: PyTorch
-- Loss: Binary Cross-Entropy (BCE)
+**Parámetros de entrenamiento (v1.1.0, medidos en `Model_Collab/Kaggle-MLP-PE/v5/metrics/`):**
+- Framework: PyTorch 2.4.1+cu121 (Tesla P100)
+- Loss: `BCEWithLogitsLoss`
 - Optimizer: Adam (lr=0.001)
-- Regularización: L2 weight decay (λ=1e-5)
-- Exportación: ONNX Opset 11
+- Scheduler: ninguno; 2 épocas, batch 8192, threshold 0.5
+- Exportación: ONNX Opset 17 (sigmoid incluido; 1 388 801 parámetros)
 
 ---
 
@@ -70,7 +71,7 @@ Antes de la inferencia, el vector de features se normaliza con Z-score:
 x_norm[i] = (x[i] - μ[i]) / σ[i]
 ```
 
-donde `μ` y `σ` fueron calculados sobre las 5.1M muestras de entrenamiento y están almacenados en `models/scaler.pkl` (57 KB, formato joblib).
+donde `μ` y `σ` fueron calculados sobre las 7M muestras de entrenamiento: el bloque EMBER usa `models/scaler_ember_v1.1.pkl` (57 KB) y el bloque OVERLAY_6 usa `models/scaler_overlay_v1.1.pkl` (formato joblib, nunca re-entrenar).
 
 ---
 
@@ -78,22 +79,24 @@ donde `μ` y `σ` fueron calculados sobre las 5.1M muestras de entrenamiento y e
 
 | Artefecto | Tamaño | SHA-256 (primeros 16 chars) |
 |-----------|--------|-----------------------------|
-| `best_model.onnx` | 9.3 KB | df832eaceb40043c |
-| `best_model.onnx.data` | 5.6 MB | 7482611c343b83cd |
-| `scaler.pkl` | 57 KB | b46e743cceccc7dd |
+| `shadow_net_sorel_7m_v1.1.onnx` | 5.6 MB | 468744956a1f3db3 |
+| `scaler_ember_v1.1.pkl` | 57 KB | a20feb5b227f2ece |
+| `scaler_overlay_v1.1.pkl` | 594 B | 42ab1cfd3e745f95 |
 
-Versión del modelo: `v1.0.1`, creado `2026-02-19`.
-Formato: ONNX Runtime. Umbral de producción: 0.5.
+Versión del modelo: `v1.1.0`, creado `2026-09-10` (`models/model_manifest.json`).
+Formato: ONNX Runtime. Umbral de producción: 0.5. Modelo anterior respaldado en `models/legacy_2381/`.
 
 ---
 
 ## Métricas declaradas en el proyecto
 
-Las siguientes métricas están declaradas en la documentación del proyecto (`DOCUMENTACION_TECNICA_INTEGRAL.md` y PRD). **No fueron reproducidas experimentalmente** por incompatibilidad del test set disponible (ver sección Limitaciones):
+Las siguientes métricas corresponden a la validación temporal del modelo v1.1.0 (700k muestras, threshold 0.5; ver `Model_Collab/Kaggle-MLP-PE/v5/metrics/`):
 
-| Métrica | Valor declarado |
-|---------|-----------------|
-| AUC-ROC | 0.985 |
+| Métrica | Valor medido |
+|---------|--------------|
+| AUC-ROC | 0.9956 |
+| AUC-PR | 0.9927 |
+| Accuracy / F1 / Precision / Recall | 97.08% / 95.42% / 94.35% / 96.52% |
 | Latencia inferencia ONNX | ~15 ms |
 | Latencia total extracción + inferencia | ~400–500 ms |
 
@@ -101,11 +104,11 @@ Las siguientes métricas están declaradas en la documentación del proyecto (`D
 
 ## Hallazgo sobre el test set disponible
 
-Durante la auditoría se identificó que `data/test_set/X_test.npy` **no es compatible** con el `scaler.pkl` de producción:
+Durante la auditoría se identificó que `data/test_set/X_test.npy` **no es compatible** con el scaler EMBER de producción:
 
 - `X_test.npy`: 1000 muestras, features en rango [0, 1], dtype float32
 - Media post-escalado: **21.73** (esperado: ~0)
-- Desviación post-escalado: **112.1** (esperado: ~1)
+- Desviación post-escalado: **114.74** (esperado: ~1)
 - AUC-ROC con scaler aplicado: **0.50** (equivalente a aleatorio)
 
 Al aplicar el modelo directamente sobre `X_test` (sin scaler), el modelo produce AUC-ROC = 0.0 con etiquetas convencionales, pero AUC-ROC = 1.0 con etiquetas invertidas, lo que indica que el test set es **sintético y perfectamente separable**.
@@ -121,7 +124,7 @@ Las métricas reales del modelo sobre datos de producción no pueden calcularse 
 El análisis de `sample1.exe` demuestra el problema central:
 
 ```
-ML score:           0.0000 → label: BENIGN
+ML score:           0.0913 → label: BENIGN
 Overlay ratio:      98.7% → overlay de 19.7 MB
 Overlay entropy:    7.9987 → máxima aleatoriedad (cifrado/comprimido)
 Global entropy:     7.9861
@@ -129,7 +132,7 @@ Risk score:         105 (CRITICAL)
 Operational status: DANGEROUS
 ```
 
-El modelo ML clasifica `sample1.exe` como benigno con alta confianza (score=0.0000). Sin embargo, el 98.7% del archivo es un overlay con entropía 7.9987 — indicador forense de payload cifrado o comprimido que no pertenece a la estructura PE declarada.
+El modelo ML clasifica `sample1.exe` como benigno (score=0.0913 < 0.5). Sin embargo, el 98.7% del archivo es un overlay con entropía 7.9987 — indicador forense de payload cifrado o comprimido que no pertenece a la estructura PE declarada.
 
 Este escenario corresponde a la técnica de evasión conocida como **overlay payload**: el binario PE es una cáscara pequeña y legítima (o vacía), y el contenido malicioso se almacena en datos adicionales al final del archivo que no son analizados por el parser PE estándar — y por tanto tampoco por las features del extractor.
 
@@ -140,8 +143,8 @@ La capa de Overlay Analysis detecta esto independientemente del modelo ML. Esta 
 ## Limitaciones identificadas
 
 1. **Test set sintético**: No permite calcular FPR/FNR reales del modelo en campo.
-2. **Scaler incompatible**: El `scaler.pkl` de producción no puede aplicarse al test set disponible.
+2. **Scaler incompatible**: El scaler EMBER de producción no puede aplicarse al test set disponible.
 3. **Evasión por muestreo distribuido**: Para archivos >10 MB, el extractor analiza solo el 50.2% del binario. Un atacante puede concentrar código malicioso en las regiones no muestreadas.
 4. **Features de imports limitadas**: El feature hashing (módulo 1280) introduce colisiones. APIs con nombres distintos pero mismo hash son indistinguibles para el modelo.
-5. **Sin reentrenamiento continuo**: El modelo v1.0.1 es estático. Nuevas familias de malware que no están en SOREL-20M podrían no ser detectadas.
+5. **Sin reentrenamiento continuo**: El modelo v1.1.0 es estático. Nuevas familias de malware que no están en SOREL-20M podrían no ser detectadas.
 6. **Sin validación sobre datos de campo reales**: No existe en el repositorio un conjunto de evaluación proveniente de análisis forense real.

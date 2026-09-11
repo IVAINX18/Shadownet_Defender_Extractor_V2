@@ -14,7 +14,7 @@
 ![Modelo](https://img.shields.io/badge/Modelo-PyTorch_Deep_Learning-red?style=for-the-badge&logo=pytorch&logoColor=white)
 ![Plataforma](https://img.shields.io/badge/Plataforma-Linux_%2F_Windows-lightgrey?style=for-the-badge&logo=linux&logoColor=white)
 ![ONNX](https://img.shields.io/badge/Inferencia-ONNX_Runtime-blueviolet?style=for-the-badge)
-![AUC-ROC](https://img.shields.io/badge/AUC--ROC-0.985-brightgreen?style=for-the-badge)
+![AUC-ROC](https://img.shields.io/badge/AUC--ROC-0.996-brightgreen?style=for-the-badge)
 
 </div>
 
@@ -102,7 +102,7 @@ El principio rector es una distinción conceptual poderosa:
 > Los sistemas basados en firmas memorizan **quién es** el malware (su identidad, el hash).  
 > ShadowNet aprende a reconocer **cómo se ve** el malware (su estructura, sus patrones estadísticos, sus comportamientos implícitos).
 
-El sistema analiza características estructurales, estadísticas y semánticas del archivo ejecutable en formato **PE (Portable Executable)** — el formato estándar de binarios en Windows — para predecir su maliciosidad con una precisión superior al **98%**, sin necesidad de ejecutar el archivo ni de compararlo con ninguna base de datos de firmas preexistente.
+El sistema analiza características estructurales, estadísticas y semánticas del archivo ejecutable en formato **PE (Portable Executable)** — el formato estándar de binarios en Windows — para predecir su maliciosidad (ROC-AUC 0.9956 en validación), sin necesidad de ejecutar el archivo ni de compararlo con ninguna base de datos de firmas preexistente.
 
 **Ventajas Clave del Enfoque:**
 
@@ -220,9 +220,9 @@ graph LR
     C -->|Estructura PE| E[Headers / Secciones];
     C -->|Tabla de Imports| F[Feature Hashing - IAT];
     C -->|Strings ASCII| G[Análisis de IoCs / RegEx];
-    D & E & F & G -->|Concatenación| H[Vector Crudo: 2381 dims];
-    H -->|Z-Score Normalization| I[StandardScaler - scaler.pkl];
-    I -->|Vector Normalizado| J[Modelo ONNX - best_model.onnx];
+    D & E & F & G -->|Concatenación| H[Vector Crudo: 2381 dims + OVERLAY_6];
+    H -->|Z-Score Normalization| I[StandardScalers - ember + overlay];
+    I -->|Vector Normalizado 2387| J[Modelo ONNX - shadow_net_sorel_7m_v1.1.onnx];
     J -->|Inferencia - lt 15ms| K[Score de Probabilidad: 0.0 a 1.0];
     K -->|Umbral configurable: 0.85| L[📋 Reporte Final - JSON];
 ```
@@ -239,17 +239,20 @@ Esta transformación es **determinística** (el mismo archivo siempre produce el
 
 El vector final se compone de la concatenación ordenada de varios sub-vectores o "bloques de características", donde cada bloque captura una "vista" diferente del archivo:
 
-$$\mathbf{x} = [\mathbf{x}_{\text{hist}} \;|\; \mathbf{x}_{\text{entropy}} \;|\; \mathbf{x}_{\text{strings}} \;|\; \mathbf{x}_{\text{general}} \;|\; \mathbf{x}_{\text{header}} \;|\; \mathbf{x}_{\text{sections}} \;|\; \mathbf{x}_{\text{imports}} \;|\; \mathbf{x}_{\text{exports}}]$$
+$$\mathbf{x} = [\mathbf{x}_{\text{hist}} \;|\; \mathbf{x}_{\text{entropy}} \;|\; \mathbf{x}_{\text{strings}} \;|\; \mathbf{x}_{\text{general}} \;|\; \mathbf{x}_{\text{header}} \;|\; \mathbf{x}_{\text{sections}} \;|\; \mathbf{x}_{\text{imports}} \;|\; \mathbf{x}_{\text{exports}} \;|\; \mathbf{x}_{\text{datadirs}}] \;+\; \mathbf{x}_{\text{overlay}}$$
 
 | Bloque                | Dimensiones | Concepto                                               |
 | :-------------------- | :---------: | :----------------------------------------------------- |
 | Histograma de Bytes   |     256     | Distribución estadística de los bytes del archivo      |
 | Entropía de Bytes     |     256     | Aleatoriedad local medida con ventana deslizante       |
 | Cadenas e IoCs        |     104     | Análisis de strings ASCII y patrones de amenaza        |
-| Metadatos Generales   |     72      | Cabeceras DOS/PE, timestamps, flags                    |
+| Metadatos Generales   |     10      | Tamaño, imports/exports, flags (bloque General)        |
+| Cabeceras PE          |     62      | Categóricos hasheados + 11 numéricos (canónico EMBER)  |
 | Análisis de Secciones |     255     | Nombres, tamaños, permisos de secciones PE             |
 | Imports / Exports     | 1280 + 128  | Tabla de importaciones/exportaciones (Feature Hashing) |
-| **TOTAL**             |  **2381**   | **Vector completo de características**                 |
+| Data Directories      |     30      | Tamaño + RVA de 15 directorios                         |
+| **TOTAL EMBER**       |  **2381**   | **Vector completo de características**                 |
+| OVERLAY_6 (inferencia)|      6      | Slack, tamaño, imports, certificado, patrón stub       |
 
 ---
 
@@ -466,7 +469,7 @@ A diferencia de datasets pequeños, sintéticos o desactualizados, SOREL-20M cap
 
 ## 6. Pipeline de Machine Learning
 
-Este sistema no es una "caja negra". Se basa en un pipeline de **Deep Learning** riguroso y documentado, diseñado explícitamente para la generalización y la robustez en producción. El repositorio incluye los artefactos finales de este proceso: `models/best_model.onnx` (la red neuronal entrenada) y `models/scaler.pkl` (los parámetros de normalización estadística).
+Este sistema no es una "caja negra". Se basa en un pipeline de **Deep Learning** riguroso y documentado, diseñado explícitamente para la generalización y la robustez en producción. El repositorio incluye los artefactos finales de este proceso: `models/shadow_net_sorel_7m_v1.1.onnx` (la red neuronal entrenada) y `models/scaler_ember_v1.1.pkl` + `models/scaler_overlay_v1.1.pkl` (los parámetros de normalización estadística).
 
 ### 6.1 Preprocesamiento y Normalización Estadística (Z-Score)
 
@@ -491,39 +494,36 @@ donde:
 
 Después de la normalización, cada dimensión tiene $\mu \approx 0$ y $\sigma \approx 1$ en el set de entrenamiento.
 
-El archivo `models/scaler.pkl` contiene los vectores $\boldsymbol{\mu} \in \mathbb{R}^{2381}$ y $\boldsymbol{\sigma} \in \mathbb{R}^{2381}$ fijos, calculados sobre los 5.1 millones de muestras del dataset de entrenamiento. Este archivo es **esencial**: sin él, el modelo ONNX recibiría vectores sin normalizar y produciría scores completamente incorrectos.
+Los archivos `models/scaler_ember_v1.1.pkl` ($\boldsymbol{\mu}, \boldsymbol{\sigma} \in \mathbb{R}^{2381}$) y `models/scaler_overlay_v1.1.pkl` ($\boldsymbol{\mu}, \boldsymbol{\sigma} \in \mathbb{R}^{6}$) contienen parámetros fijos, calculados sobre los 7 millones de muestras del dataset de entrenamiento. Estos archivos son **esenciales**: sin ellos, el modelo ONNX recibiría vectores sin normalizar y produciría scores completamente incorrectos.
 
 ### 6.2 Entrenamiento del Modelo (Deep Learning)
 
 A diferencia de la versión anterior (V2, basada en un clasificador **LightGBM**), **ShadowNet V3** implementa una arquitectura de **Red Neuronal Profunda (DNN)** utilizando **PyTorch**, obteniendo mejoras significativas en métricas de generalización y reducción de falsos positivos.
 
-#### 6.2.1 Dataset Híbrido de Entrenamiento (5.1 Millones de Muestras)
+#### 6.2.1 Dataset de Entrenamiento (7 Millones de Muestras SOREL-20M)
 
-Para prevenir el sesgo de un único proveedor de datos y mejorar la robustez frente a amenazas recientes, se construyó un **dataset híbrido**:
+El modelo v1.1.0 se entrenó sobre una selección 7M de SOREL-20M (seed 42, split temporal 6.3M train / 0.7M val):
 
 | Fuente                                                  |   Muestras    | Propósito                                                                                                                         |
 | :------------------------------------------------------ | :-----------: | :-------------------------------------------------------------------------------------------------------------------------------- |
-| **SOREL-20M** (subconjunto aleatorio estratificado)     |   5,000,000   | Aporta la varianza global del malware industrial: familias establecidas, distribución representativa del ecosistema real.         |
-| **ShadowNet-Original** (colección propia _in-the-wild_) |    100,000    | Aporta **frescura**: amenazas recientes de 2024-2026 que no están en SOREL. Mejora la detección de vectores de ataque emergentes. |
-| **TOTAL**                                               | **5,100,000** | —                                                                                                                                 |
+| **SOREL-20M** (selección 7M, seed 42)                   |   7,000,000   | Varianza global del malware industrial (4 187 321 malware / 2 812 679 benignos).                                                  |
+| **TOTAL**                                               | **7,000,000** | —                                                                                                                                 |
 
-**Sampling Eficiente con Memory Mapping:**
+**Entrenamiento por streaming:**
 
-Procesar 5.1 millones de vectores de 2381 dimensiones (en formato `float32`) requiere teóricamente $5.1 \times 10^6 \times 2381 \times 4 \text{ bytes} \approx 48 \text{ GB}$ de RAM, lo cual excede la capacidad de cualquier servidor estándar.
-
-La solución implementada usa **Memory-Mapped Files** (`numpy.memmap` con `mmap_mode='r'`): los datos se mantienen en disco y el OS gestiona dinámicamente qué páginas están en RAM en cada momento, cargando únicamente los _mini-batches_ necesarios para cada iteración de entrenamiento.
+Procesar 7 millones de vectores (en formato `float32`) requeriría decenas de GB de RAM. La solución implementada entrena por streaming sin materializar el dataset completo, cargando únicamente los _mini-batches_ necesarios para cada iteración de entrenamiento.
 
 #### 6.2.2 Arquitectura del Perceptrón Multicapa (MLP)
 
 Se diseñó una topología de "embudo cónico" (_funnel architecture_) que comprime progresivamente la representación de alta dimensión hasta una única neurona de salida:
 
-$$\text{Input}(2381) \xrightarrow{\text{BN}+\text{ReLU}+\text{Drop}(0.3)} \text{Dense}(512) \xrightarrow{\text{BN}+\text{ReLU}+\text{Drop}(0.2)} \text{Dense}(256) \xrightarrow{\text{BN}+\text{ReLU}+\text{Drop}(0.1)} \text{Dense}(128) \xrightarrow{\sigma} \text{Output}(1)$$
+$$\text{Input}(2387) \xrightarrow{\text{BN}+\text{ReLU}+\text{Drop}(0.3)} \text{Dense}(512) \xrightarrow{\text{BN}+\text{ReLU}+\text{Drop}(0.2)} \text{Dense}(256) \xrightarrow{\text{BN}+\text{ReLU}+\text{Drop}(0.1)} \text{Dense}(128) \xrightarrow{\sigma} \text{Output}(1)$$
 
 **Implementación en PyTorch:**
 
 ```python
 class MalwareDetector(nn.Module):
-    def __init__(self, input_dim: int = 2381):
+    def __init__(self, input_dim: int = 2387):
         super(MalwareDetector, self).__init__()
         self.layers = nn.Sequential(
             # === Capa de Entrada: Proyección inicial al espacio latente ===
@@ -566,12 +566,11 @@ class MalwareDetector(nn.Module):
 
 | Hiperparámetro    | Valor                                        | Justificación                                                                                                                                                                               |
 | :---------------- | :------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Loss Function** | Binary Cross-Entropy (BCE)                   | Estándar para clasificación binaria. Penaliza desproporcionadamente las predicciones incorrectas con alta confianza.                                                                        |
+| **Loss Function** | `BCEWithLogitsLoss`                          | Estándar para clasificación binaria con logits. Penaliza desproporcionadamente las predicciones incorrectas con alta confianza.                                                              |
 | **Optimizador**   | Adam (`lr=0.001`)                            | Optimizador adaptativo que ajusta la tasa de aprendizaje por parámetro. Robusto y con baja sensibilidad a la elección inicial de `lr`.                                                      |
-| **Weight Decay**  | $\lambda = 10^{-5}$                          | Regularización L2 implícita sobre los pesos del modelo. Previene que los pesos crezcan indefinidamente.                                                                                     |
-| **LR Scheduler**  | `ReduceLROnPlateau (patience=3, factor=0.5)` | Si la pérdida de validación no mejora en 3 épocas consecutivas, el LR se reduce a la mitad: $\alpha_{\text{new}} = 0.5 \cdot \alpha_{\text{old}}$. Evita estancamientos en mínimos locales. |
-| **Épocas**        | 15                                           | Suficiente para convergencia con el volumen de datos disponible.                                                                                                                            |
-| **Hardware**      | GPU NVIDIA A100 (CUDA)                       | Entrenado con tensores CUDA para aprovechar el paralelismo masivo de la GPU. Carga de datos asíncrona con `num_workers=4`.                                                                  |
+| **LR Scheduler**  | Ninguno                                      | 2 épocas fijas con split temporal 6.3M/0.7M (seed 42).                                                                                                                                      |
+| **Épocas**        | 2 (best = final)                             | Convergencia sana sin sobreajuste (val_loss 0.0918 → 0.0864).                                                                                                                                |
+| **Hardware**      | GPU NVIDIA Tesla P100 (torch 2.4.1+cu121)    | Entrenamiento por streaming, batch 8192, threshold 0.5.                                                                                                                                     |
 
 **Función de Pérdida BCE:**
 
@@ -589,25 +588,25 @@ Para el entorno de producción, se eliminó la dependencia pesada de PyTorch exp
 import torch
 
 # 1. Cargar el modelo con los pesos del mejor checkpoint
-model.load_state_dict(torch.load('models/best_model.pth'))
+model.load_state_dict(torch.load('Model_Collab/Kaggle-MLP-PE/v5/checkpoints/shadow_net_sorel_7m_v1.1_v5_best.pth')['state_dict'])
 model.eval()  # Desactivar BatchNorm y Dropout para inferencia
 
 # 2. Definir entrada simbólica (dummy input) para trazar el grafo computacional
-dummy_input = torch.zeros(1, 2381)  # Batch de 1, vector de 2381 dims
+dummy_input = torch.zeros(1, 2387)  # Batch de 1, vector de 2387 dims
 
-# 3. Exportar al formato ONNX (Opset versión 11 — amplio soporte)
+# 3. Exportar al formato ONNX (Opset 17, sigmoid incluido → probabilidad)
 torch.onnx.export(
     model,
     dummy_input,
-    "models/best_model.onnx",
+    "models/shadow_net_sorel_7m_v1.1.onnx",
     export_params=True,           # Incluir pesos del modelo en el archivo
-    opset_version=11,
+    opset_version=17,
     do_constant_folding=True,     # Optimización: evaluar constantes en tiempo de exportación
-    input_names=['input'],
-    output_names=['output'],
+    input_names=['features'],
+    output_names=['score'],
     dynamic_axes={                # Soportar batches de tamaño variable en inferencia
-        'input': {0: 'batch_size'},
-        'output': {0: 'batch_size'}
+        'features': {0: 'batch'},
+        'score': {0: 'batch'}
     }
 )
 ```
@@ -671,9 +670,8 @@ Resultados obtenidos en un equipo de desarrollo estándar (**Intel Core i7, 16GB
 
 | Métrica                       |        Valor         | Interpretación                                                                                                                                                                                                  |
 | :---------------------------- | :------------------: | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **AUC-ROC**                   |      **0.985**       | Área bajo la curva ROC. 1.0 es perfección; 0.5 es aleatoriedad. Un valor de 0.985 indica discriminación excelente entre malware y software benigno.                                                             |
-| **False Positive Rate (FPR)** | **< 0.5%** @ TPR=90% | En el punto de operación donde el 90% del malware es correctamente detectado, menos del 0.5% del software legítimo es incorrectamente marcado como malicioso. Esto es crítico para la usabilidad en producción. |
-| **True Positive Rate (TPR)**  |  **> 96%** @ FPR=1%  | Con una tasa de falsos positivos del 1%, el modelo detecta más del 96% del malware real.                                                                                                                        |
+| **AUC-ROC**                   |      **0.9956**      | Área bajo la curva ROC en validación temporal 700k. 1.0 es perfección; 0.5 es aleatoriedad. Un valor de 0.9956 indica discriminación excelente entre malware y software benigno.                               |
+| **Accuracy / F1**             | **97.08% / 95.42%**  | Medidos en validación temporal (threshold 0.5). Los puntos operativos FPR@TPR/TPR@FPR requieren corpus de campo y no se reportan.                                                                             |
 
 ### 8.2 Rendimiento de Latencia (Single Thread, SSD NVMe)
 
@@ -794,12 +792,12 @@ python -m legacy.verify_refactor
 La salida esperada incluye:
 
 ```
-[INFO] Cargando modelo ONNX: models/best_model.onnx ... OK
-[INFO] Cargando scaler: models/scaler.pkl ... OK
+[INFO] Loading model from models/shadow_net_sorel_7m_v1.1.onnx ... OK
+[INFO] Loading scaler EMBER from models/scaler_ember_v1.1.pkl ... OK
+[INFO] Loading scaler OVERLAY from models/scaler_overlay_v1.1.pkl ... OK
 [INFO] Analizando: samples/procexp64.exe
-[INFO] Extracción completada en 387ms | Vector dims: 2381
-[INFO] Inferencia completada en 12ms
-[RESULT] Score: 0.0023 | Veredicto: BENIGNO ✅
+[INFO] Extracción completada | Vector dims: 2381 (+6 overlay → 2387)
+[RESULT] Score: 0.0101 | Veredicto: BENIGNO ✅
 ```
 
 **Paso 5 — Ejecutar la suite de tests:**

@@ -21,10 +21,10 @@ Este hallazgo no es una hipótesis — es el resultado observable de ejecutar el
 Archivo:           samples/sample1.exe
 Tamaño:            20,906,782 bytes (20.9 MB)
 Modo extracción:   PE_FASTLOAD (archivo >10MB, muestreo 50.2%)
-Tiempo extracción: 783.9 ms
+Tiempo extracción: ~1.4 s
 
-ML score:          0.0000
-ML label:          BENIGN
+ML score:          0.0913
+ML label:          BENIGN (solo-ML, umbral 0.5)
 ML confidence:     High
 YARA matches:      0
 ```
@@ -53,13 +53,13 @@ Risk Engine — 6 indicadores activados:
   [5] global_entropy=7.9861 > 7.5
   [6] packer_indicators=True
 
-Risk score:        105 (CRITICAL)
-operational_status: DANGEROUS
+Risk:              CRITICAL
+operational_status: SUSPICIOUS
 
-Tiempo total:      1,240 ms
+Tiempo total:      ~1.9 s
 ```
 
-**Veredicto del sistema multicapa: DANGEROUS (detección correcta)**
+**Veredicto del sistema multicapa: SUSPICIOUS/CRITICAL (detección correcta)**
 
 ---
 
@@ -93,9 +93,9 @@ Estos cálculos son deterministas y no pueden ser evadidos modificando la estruc
 
 | Sistema | Veredicto | ¿Correcto? | Indicadores utilizados |
 |---------|-----------|------------|------------------------|
-| Solo ML (Fase 3) | BENIGN, score=0.0 | ❌ Falso negativo | 2381 features PE |
+| Solo ML (Fase 3) | BENIGN, score=0.0913 | ❌ Falso negativo | 2387 features (2381 + 6) |
 | ML + YARA | BENIGN, sin match YARA | ❌ Falso negativo | Features PE + firmas |
-| Sistema completo (8 capas) | DANGEROUS, CRITICAL | ✅ Detección correcta | Features + overlay + heurística |
+| Sistema completo (8 capas) | SUSPICIOUS, CRITICAL | ✅ Detección correcta | Features + overlay + heurística |
 
 ---
 
@@ -103,7 +103,7 @@ Estos cálculos son deterministas y no pueden ser evadidos modificando la estruc
 
 Este resultado demuestra empíricamente que:
 
-1. **La optimización del modelo ML en este caso no habría cambiado el resultado**. El modelo produce score=0.0000 con alta confianza. Bajar el umbral de detección habría incrementado falsos positivos sin resolver el problema de fondo.
+1. **La optimización del modelo ML en este caso no habría cambiado el resultado**. El modelo produce score=0.0913 (por debajo del umbral 0.5). La detección correcta vino de la capa overlay, no de ajustar el umbral.
 
 2. **La técnica de overlay payload es una evasión real del ML estático**. El modelo fue entrenado sobre SOREL-20M pero el patrón de `sample1.exe` (PE legítimo como envolvente + payload en overlay) es una técnica conocida de empaquetadores y droppers.
 
@@ -149,7 +149,7 @@ Estas pruebas constituyen T-14 de la fase F4.
 
 **H-T14**: Si comparamos FNR sobre CorpusOverlay (N≥100 overlay payload), entonces
 **FNR híbrido < FNR solo-ML con p<0.05 (McNemar)**, porque Overlay Analysis es ortogonal
-al extractor PE y detecta lo que el vector 2381 no ve.
+al extractor PE y detecta lo que el vector 2387 no ve.
 
 ### Sample size justificación (experiment-designer)
 

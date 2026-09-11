@@ -15,6 +15,7 @@ from extractors.section_info import SectionInfoBlock
 from extractors.header import HeaderFileInfo
 from extractors.string_extractor import StringExtractorBlock
 from extractors.general import GeneralFileInfo
+from extractors.ember_features import EmberPEFeatureExtractor, EMBER_V2_DIM
 from utils.logger import setup_logger
 
 logger = setup_logger(__name__)
@@ -76,7 +77,8 @@ class PEFeatureExtractor:
     TOTAL_DIM = 2381
 
     # Canonical ranges for each feature block inside the concatenated vector.
-    # Used by explanation scripts to avoid hard-coded offsets.
+    # Layout EMBER v2 canonico (ver extractors/ember_features.py). Incluye
+    # DataDirectories (2351:2381), que completa los 2381 dims.
     BLOCK_RANGES = {
         "ByteHistogram": (0, 256),
         "ByteEntropy": (256, 512),
@@ -86,6 +88,7 @@ class PEFeatureExtractor:
         "Section": (688, 943),
         "Imports": (943, 2223),
         "Exports": (2223, 2351),
+        "DataDirectories": (2351, 2381),
     }
     
     def __init__(self):
@@ -102,6 +105,11 @@ class PEFeatureExtractor:
         ]
         # Auditoría de cobertura y diagnóstico (Mejora 6)
         self.last_diagnostics: Dict[str, Any] = {}
+        # Extractor EMBER v2 canónico (ruta primaria para PEs parseables).
+        # Los bloques legacy (self.blocks) se conservan solo para la
+        # contingencia RAW_FALLBACK, nunca como sustituto del EMBER.
+        self._ember = EmberPEFeatureExtractor()
+        assert self.TOTAL_DIM == EMBER_V2_DIM == 2381, (self.TOTAL_DIM, EMBER_V2_DIM)
 
     @staticmethod
     def _parse_pe(raw_data: bytes, file_path: str, file_size: int) -> tuple:
@@ -352,12 +360,55 @@ class PEFeatureExtractor:
                 mode = "RAW_FALLBACK"
                 degradation_reason = f"pefile_failed: {str(e)}"
 
-        # 3. Extracción por bloques en cascada tolerante a fallos
-        current_offset = 0
-        for block in self.blocks:
+        # 3. Extracción de features.
+        # Ruta primaria: EMBER v2 canónico sobre los bytes COMPLETOS del archivo.
+        # Es la única vía que produce features en el espacio de entrenamiento
+        # (SOREL-20M); el layout legacy de bloques pefile NO es equivalente
+        # (provocaba |z| ~ 1e11 y saturación del MLP) y por eso nunca se usa
+        # como sustituto para un PE parseable.
+        # Contingencia: bloques mínimos RAW_FALLBACK (resiliencia, no equivalencia).
+        feature_backend = "legacy_fallback"
+        ember_vector = None
+        full_bytes = None
+        if pe is not None:
+            if file_size <= 10 * 1024 * 1024:
+                # read_distributed_file ya devolvió el contenido completo.
+                full_bytes = raw_data
+            else:
+                try:
+                    with open(file_path, "rb") as _f:
+                        full_bytes = _f.read()
+                except Exception as e:
+                    logger.warning(
+                        "No se pudieron leer bytes completos de %s (%s).",
+                        file_path, e,
+                    )
+                    full_bytes = None
+        if pe is not None and full_bytes:
             try:
-                if pe is None:
-                    # En modo RAW_FALLBACK solo extraemos lo mínimo de emergencia compatible
+                ember_vector = self._ember.feature_vector(full_bytes)
+                if ember_vector.shape != (self.TOTAL_DIM,) or not np.all(np.isfinite(ember_vector)):
+                    raise ValueError(f"vector EMBER inválido: {getattr(ember_vector, 'shape', None)}")
+                feature_backend = "ember_v2"
+            except Exception as e:
+                logger.warning(
+                    "EMBER v2 falló para %s (%s) → contingencia RAW_FALLBACK.",
+                    os.path.basename(file_path), e,
+                )
+                ember_vector = None
+                feature_backend = "ember_failed_fallback"
+                degradation_reason = (
+                    degradation_reason + f"; ember_failed: {e}" if degradation_reason
+                    else f"ember_failed: {e}"
+                )
+        if ember_vector is not None:
+            final_vector = ember_vector.astype(np.float32)
+        else:
+            current_offset = 0
+            for block in self.blocks:
+                try:
+                    # En contingencia solo se extrae lo mínimo de emergencia compatible
+                    # (igual que el RAW_FALLBACK histórico); el resto son ceros.
                     if block.name in ["ByteHistogram", "ByteEntropy", "StringExtractorBlock"]:
                         feats = block.extract(None, raw_data)
                     elif block.name == "GeneralFileInfo":
@@ -366,27 +417,25 @@ class PEFeatureExtractor:
                         feats[0] = float(file_size)
                     else:
                         feats = np.zeros(block.dim, dtype=np.float32)
-                else:
-                    feats = block.extract(pe, raw_data)
-                
-                # Validación de dimensiones
-                if len(feats) != block.dim:
-                    padded = np.zeros(block.dim, dtype=np.float32)
-                    min_len = min(len(feats), block.dim)
-                    padded[:min_len] = feats[:min_len]
-                    feats = padded
-                
-                end_offset = current_offset + block.dim
-                final_vector[current_offset : end_offset] = feats
-                current_offset = end_offset
-                
-            except Exception as e:
-                logger.warning(
-                    "Block %s failed for %s (offset %d): %s. Using zeros.",
-                    block.name, file_path, current_offset, e,
-                )
-                final_vector[current_offset : current_offset + block.dim] = 0.0
-                current_offset += block.dim
+
+                    # Validación de dimensiones
+                    if len(feats) != block.dim:
+                        padded = np.zeros(block.dim, dtype=np.float32)
+                        min_len = min(len(feats), block.dim)
+                        padded[:min_len] = feats[:min_len]
+                        feats = padded
+
+                    end_offset = current_offset + block.dim
+                    final_vector[current_offset : end_offset] = feats
+                    current_offset = end_offset
+
+                except Exception as e:
+                    logger.warning(
+                        "Block %s failed for %s (offset %d): %s. Using zeros.",
+                        block.name, file_path, current_offset, e,
+                    )
+                    final_vector[current_offset : current_offset + block.dim] = 0.0
+                    current_offset += block.dim
 
         # Detección de Packers para auditoría
         packer_info = self.detect_packer_features(pe, raw_data, file_size)
@@ -409,6 +458,7 @@ class PEFeatureExtractor:
                 "percentage_analyzed": round(percentage_analyzed, 2),
                 "extraction_mode": mode,
                 "degradation_reason": degradation_reason,
+                "feature_backend": feature_backend,
                 "extraction_time_ms": round(elapsed_time * 1000, 2),
                 "packer_indicators": packer_info,
             }

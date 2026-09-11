@@ -26,11 +26,11 @@ La solución es componer estas técnicas en capas independientes donde cada una 
 
 **Implementación**: `models/inference.py` + `extractors/extractor.py`
 
-Produce un **score continuo** en [0.0, 1.0] que representa la probabilidad de que el binario sea malware según los patrones aprendidos sobre 5.1M muestras.
+Produce un **score continuo** en [0.0, 1.0] que representa la probabilidad de que el binario sea malware según los patrones aprendidos sobre 7M muestras (MLP 2387, v1.1.0).
 
 **Fortaleza**: Generalización estadística a variantes no vistas del mismo patrón.
 
-**Limitación confirmada en campo**: El modelo asignó score=0.0000 a `sample1.exe` a pesar de que el archivo tiene 98.7% de su contenido en un overlay de alta entropía. El extractor opera sobre la estructura PE declarada; el overlay no contribuye significativamente al vector de features porque el muestreo distribuido en archivos grandes puede no capturar su contenido, y la estructura PE en sí puede ser perfectamente legítima.
+**Limitación confirmada en campo**: El modelo asignó score=0.0913 a `sample1.exe` a pesar de que el archivo tiene 98.7% de su contenido en un overlay de alta entropía. El overlay sí queda representado en OVERLAY_6 (vía slack), pero su peso no basta para superar el umbral de 0.5; la estructura PE en sí puede ser perfectamente legítima.
 
 **Output del motor**: `label` ∈ {BENIGN, MALWARE} y `score` ∈ [0.0, 1.0].
 

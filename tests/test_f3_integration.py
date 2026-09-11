@@ -351,18 +351,18 @@ class TestShapExplainer:
         assert result["top_features"] == []
 
     def test_shap_feature_names_count(self):
-        """_build_feature_names debe retornar exactamente 2381 nombres."""
-        from core.explain.shap_explainer import _build_feature_names, FEATURE_DIM
+        """_build_feature_names debe retornar exactamente 2387 nombres (2381 EMBER + 6 OVERLAY)."""
+        from core.explain.shap_explainer import _build_feature_names, MODEL_FEATURE_DIM
         names = _build_feature_names()
-        assert len(names) == FEATURE_DIM, (
-            f"Esperado {FEATURE_DIM} feature names, got {len(names)}"
+        assert len(names) == MODEL_FEATURE_DIM, (
+            f"Esperado {MODEL_FEATURE_DIM} feature names, got {len(names)}"
         )
 
     def test_shap_background_shape(self):
-        """_load_background debe retornar array de shape (n, 2381)."""
-        from core.explain.shap_explainer import _load_background, FEATURE_DIM
+        """_load_background debe retornar array de shape (n, 2381) (background crudo EMBER)."""
+        from core.explain.shap_explainer import _load_background, EMBER_FEATURE_DIM
         bg = _load_background(n=50)
-        assert bg.shape[1] == FEATURE_DIM, (
+        assert bg.shape[1] == EMBER_FEATURE_DIM, (
             f"Background shape incorrecto: {bg.shape}"
         )
         assert bg.shape[0] == 50

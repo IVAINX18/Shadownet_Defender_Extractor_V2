@@ -13,9 +13,9 @@ flowchart TD
     A[CLI / API REST] --> B[Validación entrada\nsha256, tamaño, extensión]
     B --> C[YARA Scanner\n4 archivos de reglas]
     C -->|match| D[DANGEROUS inmediato]
-    C -->|no match| E[Feature Extractor\n2381 dims]
+    C -->|no match| E[Feature Extractor\n2381 dims + OVERLAY_6]
     E --> F[UPX / Packer Detection\nentropía, ratio secciones]
-    F --> G[ML Inference\nONNX Runtime\n2381→512→256→128→1]
+    F --> G[ML Inference\nONNX Runtime\n2387→512→256→128→1]
     G --> H[Overlay Analysis\nentropía, embedded PE\nYARA overlay]
     H --> I[DotNet Analysis\nCLR header, ofuscadores\nassemblies embebidos]
     I --> J[IL Behavioral Analysis\ntokens CLR M2-M15]
@@ -38,7 +38,7 @@ Produce output JSON con todos los campos del `ScanResult`.
 
 ### Feature Extractor (`extractors/extractor.py`)
 
-Convierte un binario PE a un vector de **2381 dimensiones** mediante 8 bloques:
+Convierte un binario PE a un vector EMBER de **2381 dimensiones** (ruta canónica `extractors/ember_features.py`, LIEF) más un bloque OVERLAY de 6 señales derivado del bloque General (**entrada del modelo: 2387**):
 
 | Bloque | Dimensiones | Descripción |
 |--------|-------------|-------------|
@@ -46,10 +46,12 @@ Convierte un binario PE a un vector de **2381 dimensiones** mediante 8 bloques:
 | ByteEntropy | 256 | Entropía de Shannon en ventanas deslizantes |
 | Strings | 104 | IoCs extraídos: URLs, APIs Win32, registry keys, comandos |
 | General | 10 | Metadatos: tamaño, nº imports, nº exports, etc. |
-| Header | 62 | Cabeceras PE: timestamps, flags, subsystem, magic |
-| Section | 255 | Análisis de secciones: entropía, RWX, discrepancias virtual/raw |
-| Imports | 1280 | Feature hashing SHA-256 de APIs importadas (IAT) |
+| Header | 62 | Cabeceras PE: categóricos hasheados + 11 numéricos (canónico EMBER v2) |
+| Section | 255 | Análisis de secciones: entropía, RWX, discrepancias virtual/raw (FeatureHasher) |
+| Imports | 1280 | Feature hashing (murmurhash: 256 librerías + 1024 funciones) de APIs importadas (IAT) |
 | Exports | 128 | Feature hashing de símbolos exportados |
+| DataDirectories | 30 | Tamaño + RVA de 15 directorios |
+| OVERLAY_6 | 6 | `slack_ratio`, `slack_bytes_log`, `file_size_log`, `imports_log`, `has_cert`, `stub_overlay_pattern` |
 
 Archivo >10 MB: muestreo distribuido (inicio + centro + fin). Si `pefile` falla: modo `RAW_FALLBACK`.
 
@@ -70,15 +72,15 @@ Indicadores en el vector de features:
 
 Red neuronal fully connected:
 ```
-Input (2381) → BatchNorm + ReLU + Dropout(0.3) → 512
+Input (2387 = 2381 EMBER + 6 OVERLAY) → BatchNorm + ReLU + Dropout(0.3) → 512
             → BatchNorm + ReLU + Dropout(0.2) → 256
             → BatchNorm + ReLU + Dropout(0.1) → 128
             → Sigmoid → Output (1, rango 0.0–1.0)
 ```
 - Umbral engine: 0.5 (≥0.5 → MALWARE)
 - Umbral tripartito backend: <0.4 benign / 0.4–0.7 suspicious / >0.7 malicious
-- Preprocesamiento: `StandardScaler` Z-score (`scaler.pkl`)
-- Formato exportado: ONNX Opset 11
+- Preprocesamiento: un `StandardScaler` Z-score por bloque (`scaler_ember_v1.1.pkl` + `scaler_overlay_v1.1.pkl`)
+- Formato exportado: ONNX Opset 17 (`shadow_net_sorel_7m_v1.1.onnx`)
 
 ### Overlay Analysis (`core/overlay/` — Fase 4)
 
@@ -186,7 +188,7 @@ flowchart LR
 | Componente | Estado |
 |------------|--------|
 | YARA Scanner | ✅ Completo e integrado |
-| Feature Extractor 2381 dims | ✅ Completo e integrado |
+| Feature Extractor 2381 dims + OVERLAY_6 (modelo 2387) | ✅ Completo e integrado |
 | ML/ONNX Inference | ✅ Completo e integrado |
 | Overlay Analysis | ✅ Completo e integrado |
 | DotNet/CLR Analysis | ✅ Completo e integrado |

@@ -1354,5 +1354,4253 @@
     "behavioral_analysis": null,
     "offline": true,
     "queued_at": "2026-09-06T17:48:50.675402+00:00"
+  },
+  {
+    "file_name": "evil_00.exe",
+    "scan_type": "single",
+    "result": "suspicious",
+    "confidence": 0.9998,
+    "scan_time": "0.39s",
+    "features_detected": [],
+    "timestamp": "2026-09-10T21:31:06.072468+00:00",
+    "explanation": null,
+    "risk_level": "high",
+    "analysis_type": "pe",
+    "user_id": "user-security-test",
+    "user_email": "sec@test.com",
+    "yara_matches": [],
+    "was_unpacked": false,
+    "detection_phases": [
+      "YARA",
+      "ML_STATIC",
+      "OVERLAY_FORENSICS",
+      "DOTNET_ANALYSIS",
+      "CORRELATION"
+    ],
+    "is_dotnet": false,
+    "clr_version": null,
+    "assembly_name": null,
+    "obfuscator_detected": false,
+    "obfuscator_name": null,
+    "embedded_assemblies_count": 0,
+    "reflection_usage": false,
+    "dynamic_loading_detected": false,
+    "dotnet_risk_score": 0,
+    "dotnet_risk_level": "LOW",
+    "dotnet_threat_score": 0,
+    "dotnet_threat_level": "LOW",
+    "injection_detected": false,
+    "persistence_detected": false,
+    "networking_detected": false,
+    "credential_theft_detected": false,
+    "worm_behavior_detected": false,
+    "rat_detected": false,
+    "stealer_detected": false,
+    "top_family": null,
+    "family_likelihoods": {},
+    "sha256": "dcb8daf9f7b51b4b6b1e63bb86347ec9bb8b08198e03c4c890b6e3ac7144f8ea",
+    "behavioral_analysis": null,
+    "operational_status": "SUSPICIOUS",
+    "evidences": [
+      {
+        "source": "ml_onnx",
+        "verdict": "malicious",
+        "score": 0.9998,
+        "score_raw": 0.9998,
+        "score_norm": 0.9998,
+        "scale": "prob_0_1",
+        "severity": "critical",
+        "operational_status": "dangerous",
+        "indicators": [],
+        "reasons": [
+          "ml_score=0.9998 threshold=0.5 confidence=High"
+        ],
+        "metadata": {
+          "confidence": "High",
+          "threshold": 0.5
+        },
+        "timestamp": "2026-09-10T21:31:06.069419+00:00",
+        "status": "ok",
+        "error": null,
+        "reliability": "medium",
+        "reliability_weight": 0.6,
+        "evidence_group": "ml_prob",
+        "confidence": "High"
+      },
+      {
+        "source": "yara",
+        "verdict": "benign",
+        "score": 0.0,
+        "score_raw": 0.0,
+        "score_norm": 0.0,
+        "scale": "deterministic",
+        "severity": "low",
+        "operational_status": "clean",
+        "indicators": [],
+        "reasons": [
+          "no yara matches"
+        ],
+        "metadata": {},
+        "timestamp": "2026-09-10T21:31:06.069449+00:00",
+        "status": "ok",
+        "error": null,
+        "reliability": "medium",
+        "reliability_weight": 0.6,
+        "evidence_group": "yara_sig",
+        "confidence": "Medium"
+      },
+      {
+        "source": "pe_static",
+        "verdict": "suspicious",
+        "score": 20.0,
+        "score_raw": 20.0,
+        "score_norm": 0.4,
+        "scale": "heuristic_0_50",
+        "severity": "medium",
+        "operational_status": "suspicious",
+        "indicators": [
+          {
+            "name": "no_imports",
+            "value": 0,
+            "weight": 20,
+            "description": ""
+          }
+        ],
+        "reasons": [
+          "no_imports"
+        ],
+        "metadata": {
+          "global_entropy": 0.09,
+          "ratio_virtual_real": 1.0,
+          "num_sections": 0,
+          "executable_sections": 0,
+          "rwx_sections": 0,
+          "anomalous_sections": 0,
+          "num_imports": 0,
+          "num_exports": 0,
+          "is_packed_upx": false,
+          "high_entropy_sections": 0,
+          "packer_detected": false,
+          "packer_reasons": []
+        },
+        "timestamp": "2026-09-10T21:31:06.069464+00:00",
+        "status": "ok",
+        "error": null,
+        "reliability": "medium",
+        "reliability_weight": 0.6,
+        "evidence_group": "pe_heuristic",
+        "confidence": "Medium"
+      },
+      {
+        "source": "overlay",
+        "verdict": "benign",
+        "score": 0.0,
+        "score_raw": 0.0,
+        "score_norm": 0.0,
+        "scale": 60.0,
+        "severity": "low",
+        "operational_status": "clean",
+        "indicators": [],
+        "reasons": [
+          "no overlay signals"
+        ],
+        "metadata": {
+          "overlay_present": false,
+          "overlay_offset": 0,
+          "overlay_size": 0,
+          "overlay_ratio": 0.0,
+          "overlay_entropy": 0.0,
+          "global_entropy": 0.09,
+          "max_block_entropy": 0.0,
+          "high_entropy_block_ratio": 0.0,
+          "block_count": 0,
+          "embedded_pe_detected": false,
+          "embedded_pe_count": 0,
+          "embedded_pe_offsets": [],
+          "embedded_pe_details": [],
+          "overlay_has_strings": false,
+          "overlay_string_count": 0,
+          "overlay_suspicious_strings": [],
+          "is_known_installer": false,
+          "installer_type": null,
+          "installer_spoof_suspected": false,
+          "overlay_yara_hits": [],
+          "embedded_pe_yara_hits": []
+        },
+        "timestamp": "2026-09-10T21:31:06.069475+00:00",
+        "status": "ok",
+        "error": null,
+        "reliability": "medium",
+        "reliability_weight": 0.6,
+        "evidence_group": "overlay_forensic",
+        "confidence": "Low"
+      },
+      {
+        "source": "heuristic",
+        "verdict": "benign",
+        "score": 20.0,
+        "score_raw": 20.0,
+        "score_norm": 0.2,
+        "scale": 100.0,
+        "severity": "low",
+        "operational_status": "dangerous",
+        "indicators": [
+          {
+            "name": "no_imports (posible dropper sin IAT)",
+            "value": "no_imports (posible dropper sin IAT)",
+            "weight": 0,
+            "description": ""
+          }
+        ],
+        "reasons": [
+          "no_imports (posible dropper sin IAT)"
+        ],
+        "metadata": {
+          "risk_score": 20,
+          "risk_level": "LOW",
+          "operational_status": "DANGEROUS",
+          "triggered_indicators": [
+            "no_imports (posible dropper sin IAT)"
+          ],
+          "justification": "Risk LOW (score=20). Triggered 1 indicator(s): no_imports (posible dropper sin IAT)"
+        },
+        "timestamp": "2026-09-10T21:31:06.069485+00:00",
+        "status": "ok",
+        "error": null,
+        "reliability": "medium",
+        "reliability_weight": 0.6,
+        "evidence_group": "pe_heuristic",
+        "confidence": "Low"
+      },
+      {
+        "source": "dotnet",
+        "verdict": "benign",
+        "score": 0.0,
+        "score_raw": 0.0,
+        "score_norm": 0.0,
+        "scale": "heuristic_0_100",
+        "severity": "low",
+        "operational_status": "clean",
+        "indicators": [],
+        "reasons": [
+          "not_dotnet"
+        ],
+        "metadata": {
+          "is_dotnet": false
+        },
+        "timestamp": "2026-09-10T21:31:06.069491+00:00",
+        "status": "ok",
+        "error": null,
+        "reliability": "low",
+        "reliability_weight": 0.35,
+        "evidence_group": "dotnet_meta",
+        "confidence": "Low"
+      },
+      {
+        "source": "il_behavioral",
+        "verdict": "benign",
+        "score": 0.0,
+        "score_raw": 0.0,
+        "score_norm": 0.0,
+        "scale": "heuristic_0_100",
+        "severity": "low",
+        "operational_status": "clean",
+        "indicators": [],
+        "reasons": [
+          "not_dotnet_no_il"
+        ],
+        "metadata": {
+          "is_dotnet": false
+        },
+        "timestamp": "2026-09-10T21:31:06.069495+00:00",
+        "status": "ok",
+        "error": null,
+        "reliability": "low",
+        "reliability_weight": 0.35,
+        "evidence_group": "il_semantic",
+        "confidence": "Low"
+      }
+    ],
+    "final_verdict": {
+      "verdict": "suspicious",
+      "risk_level": "critical",
+      "operational_status": "suspicious",
+      "score": 0.2709290322580645,
+      "confidence": "High",
+      "reasons": [
+        "S=0.27 coverage=100%",
+        "contradiction: ML malicious 1.00 contradicted by 5 benign sources",
+        "contributors: ml_onnx,pe_static",
+        "ml_onnx: ml_score=0.9998 threshold=0.5 confidence=High",
+        "pe_static: no_imports"
+      ],
+      "contributing_sources": [
+        "ml_onnx",
+        "pe_static"
+      ],
+      "evidences": [
+        {
+          "source": "ml_onnx",
+          "verdict": "malicious",
+          "score": 0.9998,
+          "score_raw": 0.9998,
+          "score_norm": 0.9998,
+          "scale": "prob_0_1",
+          "severity": "critical",
+          "operational_status": "dangerous",
+          "indicators": [],
+          "reasons": [
+            "ml_score=0.9998 threshold=0.5 confidence=High"
+          ],
+          "metadata": {
+            "confidence": "High",
+            "threshold": 0.5
+          },
+          "timestamp": "2026-09-10T21:31:06.069419+00:00",
+          "status": "ok",
+          "error": null,
+          "reliability": "medium",
+          "reliability_weight": 0.6,
+          "evidence_group": "ml_prob",
+          "confidence": "High"
+        },
+        {
+          "source": "yara",
+          "verdict": "benign",
+          "score": 0.0,
+          "score_raw": 0.0,
+          "score_norm": 0.0,
+          "scale": "deterministic",
+          "severity": "low",
+          "operational_status": "clean",
+          "indicators": [],
+          "reasons": [
+            "no yara matches"
+          ],
+          "metadata": {},
+          "timestamp": "2026-09-10T21:31:06.069449+00:00",
+          "status": "ok",
+          "error": null,
+          "reliability": "medium",
+          "reliability_weight": 0.6,
+          "evidence_group": "yara_sig",
+          "confidence": "Medium"
+        },
+        {
+          "source": "pe_static",
+          "verdict": "suspicious",
+          "score": 20.0,
+          "score_raw": 20.0,
+          "score_norm": 0.4,
+          "scale": "heuristic_0_50",
+          "severity": "medium",
+          "operational_status": "suspicious",
+          "indicators": [
+            {
+              "name": "no_imports",
+              "value": 0,
+              "weight": 20,
+              "description": ""
+            }
+          ],
+          "reasons": [
+            "no_imports"
+          ],
+          "metadata": {
+            "global_entropy": 0.09,
+            "ratio_virtual_real": 1.0,
+            "num_sections": 0,
+            "executable_sections": 0,
+            "rwx_sections": 0,
+            "anomalous_sections": 0,
+            "num_imports": 0,
+            "num_exports": 0,
+            "is_packed_upx": false,
+            "high_entropy_sections": 0,
+            "packer_detected": false,
+            "packer_reasons": []
+          },
+          "timestamp": "2026-09-10T21:31:06.069464+00:00",
+          "status": "ok",
+          "error": null,
+          "reliability": "medium",
+          "reliability_weight": 0.6,
+          "evidence_group": "pe_heuristic",
+          "confidence": "Medium"
+        },
+        {
+          "source": "overlay",
+          "verdict": "benign",
+          "score": 0.0,
+          "score_raw": 0.0,
+          "score_norm": 0.0,
+          "scale": 60.0,
+          "severity": "low",
+          "operational_status": "clean",
+          "indicators": [],
+          "reasons": [
+            "no overlay signals"
+          ],
+          "metadata": {
+            "overlay_present": false,
+            "overlay_offset": 0,
+            "overlay_size": 0,
+            "overlay_ratio": 0.0,
+            "overlay_entropy": 0.0,
+            "global_entropy": 0.09,
+            "max_block_entropy": 0.0,
+            "high_entropy_block_ratio": 0.0,
+            "block_count": 0,
+            "embedded_pe_detected": false,
+            "embedded_pe_count": 0,
+            "embedded_pe_offsets": [],
+            "embedded_pe_details": [],
+            "overlay_has_strings": false,
+            "overlay_string_count": 0,
+            "overlay_suspicious_strings": [],
+            "is_known_installer": false,
+            "installer_type": null,
+            "installer_spoof_suspected": false,
+            "overlay_yara_hits": [],
+            "embedded_pe_yara_hits": []
+          },
+          "timestamp": "2026-09-10T21:31:06.069475+00:00",
+          "status": "ok",
+          "error": null,
+          "reliability": "medium",
+          "reliability_weight": 0.6,
+          "evidence_group": "overlay_forensic",
+          "confidence": "Low"
+        },
+        {
+          "source": "heuristic",
+          "verdict": "benign",
+          "score": 20.0,
+          "score_raw": 20.0,
+          "score_norm": 0.2,
+          "scale": 100.0,
+          "severity": "low",
+          "operational_status": "dangerous",
+          "indicators": [
+            {
+              "name": "no_imports (posible dropper sin IAT)",
+              "value": "no_imports (posible dropper sin IAT)",
+              "weight": 0,
+              "description": ""
+            }
+          ],
+          "reasons": [
+            "no_imports (posible dropper sin IAT)"
+          ],
+          "metadata": {
+            "risk_score": 20,
+            "risk_level": "LOW",
+            "operational_status": "DANGEROUS",
+            "triggered_indicators": [
+              "no_imports (posible dropper sin IAT)"
+            ],
+            "justification": "Risk LOW (score=20). Triggered 1 indicator(s): no_imports (posible dropper sin IAT)"
+          },
+          "timestamp": "2026-09-10T21:31:06.069485+00:00",
+          "status": "ok",
+          "error": null,
+          "reliability": "medium",
+          "reliability_weight": 0.6,
+          "evidence_group": "pe_heuristic",
+          "confidence": "Low"
+        },
+        {
+          "source": "dotnet",
+          "verdict": "benign",
+          "score": 0.0,
+          "score_raw": 0.0,
+          "score_norm": 0.0,
+          "scale": "heuristic_0_100",
+          "severity": "low",
+          "operational_status": "clean",
+          "indicators": [],
+          "reasons": [
+            "not_dotnet"
+          ],
+          "metadata": {
+            "is_dotnet": false
+          },
+          "timestamp": "2026-09-10T21:31:06.069491+00:00",
+          "status": "ok",
+          "error": null,
+          "reliability": "low",
+          "reliability_weight": 0.35,
+          "evidence_group": "dotnet_meta",
+          "confidence": "Low"
+        },
+        {
+          "source": "il_behavioral",
+          "verdict": "benign",
+          "score": 0.0,
+          "score_raw": 0.0,
+          "score_norm": 0.0,
+          "scale": "heuristic_0_100",
+          "severity": "low",
+          "operational_status": "clean",
+          "indicators": [],
+          "reasons": [
+            "not_dotnet_no_il"
+          ],
+          "metadata": {
+            "is_dotnet": false
+          },
+          "timestamp": "2026-09-10T21:31:06.069495+00:00",
+          "status": "ok",
+          "error": null,
+          "reliability": "low",
+          "reliability_weight": 0.35,
+          "evidence_group": "il_semantic",
+          "confidence": "Low"
+        }
+      ],
+      "timestamp": "2026-09-10T21:31:06.069585+00:00",
+      "ml_score_raw": 0.9998,
+      "degraded": false,
+      "coverage": 1.0,
+      "contradiction": "ML malicious 1.00 contradicted by 5 benign sources"
+    },
+    "correlation": {
+      "verdict": "suspicious",
+      "risk_level": "critical",
+      "operational_status": "suspicious",
+      "reasons": [
+        "S=0.27 coverage=100%",
+        "contradiction: ML malicious 1.00 contradicted by 5 benign sources",
+        "contributors: ml_onnx,pe_static",
+        "ml_onnx: ml_score=0.9998 threshold=0.5 confidence=High",
+        "pe_static: no_imports"
+      ],
+      "contributing_sources": [
+        "ml_onnx",
+        "pe_static"
+      ],
+      "ml_score_preserved": 0.9998
+    },
+    "degraded": false,
+    "coverage": 1.0,
+    "offline": true,
+    "queued_at": "2026-09-10T21:31:08.733247+00:00"
+  },
+  {
+    "file_name": "evil_00.exe",
+    "scan_type": "single",
+    "result": "suspicious",
+    "confidence": 0.9998,
+    "scan_time": "0.34s",
+    "features_detected": [],
+    "timestamp": "2026-09-10T21:32:01.765941+00:00",
+    "explanation": null,
+    "risk_level": "high",
+    "analysis_type": "pe",
+    "user_id": "user-security-test",
+    "user_email": "sec@test.com",
+    "yara_matches": [],
+    "was_unpacked": false,
+    "detection_phases": [
+      "YARA",
+      "ML_STATIC",
+      "OVERLAY_FORENSICS",
+      "DOTNET_ANALYSIS",
+      "CORRELATION"
+    ],
+    "is_dotnet": false,
+    "clr_version": null,
+    "assembly_name": null,
+    "obfuscator_detected": false,
+    "obfuscator_name": null,
+    "embedded_assemblies_count": 0,
+    "reflection_usage": false,
+    "dynamic_loading_detected": false,
+    "dotnet_risk_score": 0,
+    "dotnet_risk_level": "LOW",
+    "dotnet_threat_score": 0,
+    "dotnet_threat_level": "LOW",
+    "injection_detected": false,
+    "persistence_detected": false,
+    "networking_detected": false,
+    "credential_theft_detected": false,
+    "worm_behavior_detected": false,
+    "rat_detected": false,
+    "stealer_detected": false,
+    "top_family": null,
+    "family_likelihoods": {},
+    "sha256": "dcb8daf9f7b51b4b6b1e63bb86347ec9bb8b08198e03c4c890b6e3ac7144f8ea",
+    "behavioral_analysis": null,
+    "operational_status": "SUSPICIOUS",
+    "evidences": [
+      {
+        "source": "ml_onnx",
+        "verdict": "malicious",
+        "score": 0.9998,
+        "score_raw": 0.9998,
+        "score_norm": 0.9998,
+        "scale": "prob_0_1",
+        "severity": "critical",
+        "operational_status": "dangerous",
+        "indicators": [],
+        "reasons": [
+          "ml_score=0.9998 threshold=0.5 confidence=High"
+        ],
+        "metadata": {
+          "confidence": "High",
+          "threshold": 0.5
+        },
+        "timestamp": "2026-09-10T21:32:01.761931+00:00",
+        "status": "ok",
+        "error": null,
+        "reliability": "medium",
+        "reliability_weight": 0.6,
+        "evidence_group": "ml_prob",
+        "confidence": "High"
+      },
+      {
+        "source": "yara",
+        "verdict": "benign",
+        "score": 0.0,
+        "score_raw": 0.0,
+        "score_norm": 0.0,
+        "scale": "deterministic",
+        "severity": "low",
+        "operational_status": "clean",
+        "indicators": [],
+        "reasons": [
+          "no yara matches"
+        ],
+        "metadata": {},
+        "timestamp": "2026-09-10T21:32:01.761980+00:00",
+        "status": "ok",
+        "error": null,
+        "reliability": "medium",
+        "reliability_weight": 0.6,
+        "evidence_group": "yara_sig",
+        "confidence": "Medium"
+      },
+      {
+        "source": "pe_static",
+        "verdict": "suspicious",
+        "score": 20.0,
+        "score_raw": 20.0,
+        "score_norm": 0.4,
+        "scale": "heuristic_0_50",
+        "severity": "medium",
+        "operational_status": "suspicious",
+        "indicators": [
+          {
+            "name": "no_imports",
+            "value": 0,
+            "weight": 20,
+            "description": ""
+          }
+        ],
+        "reasons": [
+          "no_imports"
+        ],
+        "metadata": {
+          "global_entropy": 0.09,
+          "ratio_virtual_real": 1.0,
+          "num_sections": 0,
+          "executable_sections": 0,
+          "rwx_sections": 0,
+          "anomalous_sections": 0,
+          "num_imports": 0,
+          "num_exports": 0,
+          "is_packed_upx": false,
+          "high_entropy_sections": 0,
+          "packer_detected": false,
+          "packer_reasons": []
+        },
+        "timestamp": "2026-09-10T21:32:01.762004+00:00",
+        "status": "ok",
+        "error": null,
+        "reliability": "medium",
+        "reliability_weight": 0.6,
+        "evidence_group": "pe_heuristic",
+        "confidence": "Medium"
+      },
+      {
+        "source": "overlay",
+        "verdict": "benign",
+        "score": 0.0,
+        "score_raw": 0.0,
+        "score_norm": 0.0,
+        "scale": 60.0,
+        "severity": "low",
+        "operational_status": "clean",
+        "indicators": [],
+        "reasons": [
+          "no overlay signals"
+        ],
+        "metadata": {
+          "overlay_present": false,
+          "overlay_offset": 0,
+          "overlay_size": 0,
+          "overlay_ratio": 0.0,
+          "overlay_entropy": 0.0,
+          "global_entropy": 0.09,
+          "max_block_entropy": 0.0,
+          "high_entropy_block_ratio": 0.0,
+          "block_count": 0,
+          "embedded_pe_detected": false,
+          "embedded_pe_count": 0,
+          "embedded_pe_offsets": [],
+          "embedded_pe_details": [],
+          "overlay_has_strings": false,
+          "overlay_string_count": 0,
+          "overlay_suspicious_strings": [],
+          "is_known_installer": false,
+          "installer_type": null,
+          "installer_spoof_suspected": false,
+          "overlay_yara_hits": [],
+          "embedded_pe_yara_hits": []
+        },
+        "timestamp": "2026-09-10T21:32:01.762023+00:00",
+        "status": "ok",
+        "error": null,
+        "reliability": "medium",
+        "reliability_weight": 0.6,
+        "evidence_group": "overlay_forensic",
+        "confidence": "Low"
+      },
+      {
+        "source": "heuristic",
+        "verdict": "benign",
+        "score": 20.0,
+        "score_raw": 20.0,
+        "score_norm": 0.2,
+        "scale": 100.0,
+        "severity": "low",
+        "operational_status": "dangerous",
+        "indicators": [
+          {
+            "name": "no_imports (posible dropper sin IAT)",
+            "value": "no_imports (posible dropper sin IAT)",
+            "weight": 0,
+            "description": ""
+          }
+        ],
+        "reasons": [
+          "no_imports (posible dropper sin IAT)"
+        ],
+        "metadata": {
+          "risk_score": 20,
+          "risk_level": "LOW",
+          "operational_status": "DANGEROUS",
+          "triggered_indicators": [
+            "no_imports (posible dropper sin IAT)"
+          ],
+          "justification": "Risk LOW (score=20). Triggered 1 indicator(s): no_imports (posible dropper sin IAT)"
+        },
+        "timestamp": "2026-09-10T21:32:01.762038+00:00",
+        "status": "ok",
+        "error": null,
+        "reliability": "medium",
+        "reliability_weight": 0.6,
+        "evidence_group": "pe_heuristic",
+        "confidence": "Low"
+      },
+      {
+        "source": "dotnet",
+        "verdict": "benign",
+        "score": 0.0,
+        "score_raw": 0.0,
+        "score_norm": 0.0,
+        "scale": "heuristic_0_100",
+        "severity": "low",
+        "operational_status": "clean",
+        "indicators": [],
+        "reasons": [
+          "not_dotnet"
+        ],
+        "metadata": {
+          "is_dotnet": false
+        },
+        "timestamp": "2026-09-10T21:32:01.762048+00:00",
+        "status": "ok",
+        "error": null,
+        "reliability": "low",
+        "reliability_weight": 0.35,
+        "evidence_group": "dotnet_meta",
+        "confidence": "Low"
+      },
+      {
+        "source": "il_behavioral",
+        "verdict": "benign",
+        "score": 0.0,
+        "score_raw": 0.0,
+        "score_norm": 0.0,
+        "scale": "heuristic_0_100",
+        "severity": "low",
+        "operational_status": "clean",
+        "indicators": [],
+        "reasons": [
+          "not_dotnet_no_il"
+        ],
+        "metadata": {
+          "is_dotnet": false
+        },
+        "timestamp": "2026-09-10T21:32:01.762057+00:00",
+        "status": "ok",
+        "error": null,
+        "reliability": "low",
+        "reliability_weight": 0.35,
+        "evidence_group": "il_semantic",
+        "confidence": "Low"
+      }
+    ],
+    "final_verdict": {
+      "verdict": "suspicious",
+      "risk_level": "critical",
+      "operational_status": "suspicious",
+      "score": 0.2709290322580645,
+      "confidence": "High",
+      "reasons": [
+        "S=0.27 coverage=100%",
+        "contradiction: ML malicious 1.00 contradicted by 5 benign sources",
+        "contributors: ml_onnx,pe_static",
+        "ml_onnx: ml_score=0.9998 threshold=0.5 confidence=High",
+        "pe_static: no_imports"
+      ],
+      "contributing_sources": [
+        "ml_onnx",
+        "pe_static"
+      ],
+      "evidences": [
+        {
+          "source": "ml_onnx",
+          "verdict": "malicious",
+          "score": 0.9998,
+          "score_raw": 0.9998,
+          "score_norm": 0.9998,
+          "scale": "prob_0_1",
+          "severity": "critical",
+          "operational_status": "dangerous",
+          "indicators": [],
+          "reasons": [
+            "ml_score=0.9998 threshold=0.5 confidence=High"
+          ],
+          "metadata": {
+            "confidence": "High",
+            "threshold": 0.5
+          },
+          "timestamp": "2026-09-10T21:32:01.761931+00:00",
+          "status": "ok",
+          "error": null,
+          "reliability": "medium",
+          "reliability_weight": 0.6,
+          "evidence_group": "ml_prob",
+          "confidence": "High"
+        },
+        {
+          "source": "yara",
+          "verdict": "benign",
+          "score": 0.0,
+          "score_raw": 0.0,
+          "score_norm": 0.0,
+          "scale": "deterministic",
+          "severity": "low",
+          "operational_status": "clean",
+          "indicators": [],
+          "reasons": [
+            "no yara matches"
+          ],
+          "metadata": {},
+          "timestamp": "2026-09-10T21:32:01.761980+00:00",
+          "status": "ok",
+          "error": null,
+          "reliability": "medium",
+          "reliability_weight": 0.6,
+          "evidence_group": "yara_sig",
+          "confidence": "Medium"
+        },
+        {
+          "source": "pe_static",
+          "verdict": "suspicious",
+          "score": 20.0,
+          "score_raw": 20.0,
+          "score_norm": 0.4,
+          "scale": "heuristic_0_50",
+          "severity": "medium",
+          "operational_status": "suspicious",
+          "indicators": [
+            {
+              "name": "no_imports",
+              "value": 0,
+              "weight": 20,
+              "description": ""
+            }
+          ],
+          "reasons": [
+            "no_imports"
+          ],
+          "metadata": {
+            "global_entropy": 0.09,
+            "ratio_virtual_real": 1.0,
+            "num_sections": 0,
+            "executable_sections": 0,
+            "rwx_sections": 0,
+            "anomalous_sections": 0,
+            "num_imports": 0,
+            "num_exports": 0,
+            "is_packed_upx": false,
+            "high_entropy_sections": 0,
+            "packer_detected": false,
+            "packer_reasons": []
+          },
+          "timestamp": "2026-09-10T21:32:01.762004+00:00",
+          "status": "ok",
+          "error": null,
+          "reliability": "medium",
+          "reliability_weight": 0.6,
+          "evidence_group": "pe_heuristic",
+          "confidence": "Medium"
+        },
+        {
+          "source": "overlay",
+          "verdict": "benign",
+          "score": 0.0,
+          "score_raw": 0.0,
+          "score_norm": 0.0,
+          "scale": 60.0,
+          "severity": "low",
+          "operational_status": "clean",
+          "indicators": [],
+          "reasons": [
+            "no overlay signals"
+          ],
+          "metadata": {
+            "overlay_present": false,
+            "overlay_offset": 0,
+            "overlay_size": 0,
+            "overlay_ratio": 0.0,
+            "overlay_entropy": 0.0,
+            "global_entropy": 0.09,
+            "max_block_entropy": 0.0,
+            "high_entropy_block_ratio": 0.0,
+            "block_count": 0,
+            "embedded_pe_detected": false,
+            "embedded_pe_count": 0,
+            "embedded_pe_offsets": [],
+            "embedded_pe_details": [],
+            "overlay_has_strings": false,
+            "overlay_string_count": 0,
+            "overlay_suspicious_strings": [],
+            "is_known_installer": false,
+            "installer_type": null,
+            "installer_spoof_suspected": false,
+            "overlay_yara_hits": [],
+            "embedded_pe_yara_hits": []
+          },
+          "timestamp": "2026-09-10T21:32:01.762023+00:00",
+          "status": "ok",
+          "error": null,
+          "reliability": "medium",
+          "reliability_weight": 0.6,
+          "evidence_group": "overlay_forensic",
+          "confidence": "Low"
+        },
+        {
+          "source": "heuristic",
+          "verdict": "benign",
+          "score": 20.0,
+          "score_raw": 20.0,
+          "score_norm": 0.2,
+          "scale": 100.0,
+          "severity": "low",
+          "operational_status": "dangerous",
+          "indicators": [
+            {
+              "name": "no_imports (posible dropper sin IAT)",
+              "value": "no_imports (posible dropper sin IAT)",
+              "weight": 0,
+              "description": ""
+            }
+          ],
+          "reasons": [
+            "no_imports (posible dropper sin IAT)"
+          ],
+          "metadata": {
+            "risk_score": 20,
+            "risk_level": "LOW",
+            "operational_status": "DANGEROUS",
+            "triggered_indicators": [
+              "no_imports (posible dropper sin IAT)"
+            ],
+            "justification": "Risk LOW (score=20). Triggered 1 indicator(s): no_imports (posible dropper sin IAT)"
+          },
+          "timestamp": "2026-09-10T21:32:01.762038+00:00",
+          "status": "ok",
+          "error": null,
+          "reliability": "medium",
+          "reliability_weight": 0.6,
+          "evidence_group": "pe_heuristic",
+          "confidence": "Low"
+        },
+        {
+          "source": "dotnet",
+          "verdict": "benign",
+          "score": 0.0,
+          "score_raw": 0.0,
+          "score_norm": 0.0,
+          "scale": "heuristic_0_100",
+          "severity": "low",
+          "operational_status": "clean",
+          "indicators": [],
+          "reasons": [
+            "not_dotnet"
+          ],
+          "metadata": {
+            "is_dotnet": false
+          },
+          "timestamp": "2026-09-10T21:32:01.762048+00:00",
+          "status": "ok",
+          "error": null,
+          "reliability": "low",
+          "reliability_weight": 0.35,
+          "evidence_group": "dotnet_meta",
+          "confidence": "Low"
+        },
+        {
+          "source": "il_behavioral",
+          "verdict": "benign",
+          "score": 0.0,
+          "score_raw": 0.0,
+          "score_norm": 0.0,
+          "scale": "heuristic_0_100",
+          "severity": "low",
+          "operational_status": "clean",
+          "indicators": [],
+          "reasons": [
+            "not_dotnet_no_il"
+          ],
+          "metadata": {
+            "is_dotnet": false
+          },
+          "timestamp": "2026-09-10T21:32:01.762057+00:00",
+          "status": "ok",
+          "error": null,
+          "reliability": "low",
+          "reliability_weight": 0.35,
+          "evidence_group": "il_semantic",
+          "confidence": "Low"
+        }
+      ],
+      "timestamp": "2026-09-10T21:32:01.762216+00:00",
+      "ml_score_raw": 0.9998,
+      "degraded": false,
+      "coverage": 1.0,
+      "contradiction": "ML malicious 1.00 contradicted by 5 benign sources"
+    },
+    "correlation": {
+      "verdict": "suspicious",
+      "risk_level": "critical",
+      "operational_status": "suspicious",
+      "reasons": [
+        "S=0.27 coverage=100%",
+        "contradiction: ML malicious 1.00 contradicted by 5 benign sources",
+        "contributors: ml_onnx,pe_static",
+        "ml_onnx: ml_score=0.9998 threshold=0.5 confidence=High",
+        "pe_static: no_imports"
+      ],
+      "contributing_sources": [
+        "ml_onnx",
+        "pe_static"
+      ],
+      "ml_score_preserved": 0.9998
+    },
+    "degraded": false,
+    "coverage": 1.0,
+    "offline": true,
+    "queued_at": "2026-09-10T21:32:03.058852+00:00"
+  },
+  {
+    "file_name": "evil_00.exe",
+    "scan_type": "single",
+    "result": "suspicious",
+    "confidence": 0.9998,
+    "scan_time": "0.32s",
+    "features_detected": [],
+    "timestamp": "2026-09-10T21:34:26.925795+00:00",
+    "explanation": null,
+    "risk_level": "high",
+    "analysis_type": "pe",
+    "user_id": "user-security-test",
+    "user_email": "sec@test.com",
+    "yara_matches": [],
+    "was_unpacked": false,
+    "detection_phases": [
+      "YARA",
+      "ML_STATIC",
+      "OVERLAY_FORENSICS",
+      "DOTNET_ANALYSIS",
+      "CORRELATION"
+    ],
+    "is_dotnet": false,
+    "clr_version": null,
+    "assembly_name": null,
+    "obfuscator_detected": false,
+    "obfuscator_name": null,
+    "embedded_assemblies_count": 0,
+    "reflection_usage": false,
+    "dynamic_loading_detected": false,
+    "dotnet_risk_score": 0,
+    "dotnet_risk_level": "LOW",
+    "dotnet_threat_score": 0,
+    "dotnet_threat_level": "LOW",
+    "injection_detected": false,
+    "persistence_detected": false,
+    "networking_detected": false,
+    "credential_theft_detected": false,
+    "worm_behavior_detected": false,
+    "rat_detected": false,
+    "stealer_detected": false,
+    "top_family": null,
+    "family_likelihoods": {},
+    "sha256": "dcb8daf9f7b51b4b6b1e63bb86347ec9bb8b08198e03c4c890b6e3ac7144f8ea",
+    "behavioral_analysis": null,
+    "operational_status": "SUSPICIOUS",
+    "evidences": [
+      {
+        "source": "ml_onnx",
+        "verdict": "malicious",
+        "score": 0.9998,
+        "score_raw": 0.9998,
+        "score_norm": 0.9998,
+        "scale": "prob_0_1",
+        "severity": "critical",
+        "operational_status": "dangerous",
+        "indicators": [],
+        "reasons": [
+          "ml_score=0.9998 threshold=0.5 confidence=High"
+        ],
+        "metadata": {
+          "confidence": "High",
+          "threshold": 0.5
+        },
+        "timestamp": "2026-09-10T21:34:26.922544+00:00",
+        "status": "ok",
+        "error": null,
+        "reliability": "medium",
+        "reliability_weight": 0.6,
+        "evidence_group": "ml_prob",
+        "confidence": "High"
+      },
+      {
+        "source": "yara",
+        "verdict": "benign",
+        "score": 0.0,
+        "score_raw": 0.0,
+        "score_norm": 0.0,
+        "scale": "deterministic",
+        "severity": "low",
+        "operational_status": "clean",
+        "indicators": [],
+        "reasons": [
+          "no yara matches"
+        ],
+        "metadata": {},
+        "timestamp": "2026-09-10T21:34:26.922574+00:00",
+        "status": "ok",
+        "error": null,
+        "reliability": "medium",
+        "reliability_weight": 0.6,
+        "evidence_group": "yara_sig",
+        "confidence": "Medium"
+      },
+      {
+        "source": "pe_static",
+        "verdict": "suspicious",
+        "score": 20.0,
+        "score_raw": 20.0,
+        "score_norm": 0.4,
+        "scale": "heuristic_0_50",
+        "severity": "medium",
+        "operational_status": "suspicious",
+        "indicators": [
+          {
+            "name": "no_imports",
+            "value": 0,
+            "weight": 20,
+            "description": ""
+          }
+        ],
+        "reasons": [
+          "no_imports"
+        ],
+        "metadata": {
+          "global_entropy": 0.09,
+          "ratio_virtual_real": 1.0,
+          "num_sections": 0,
+          "executable_sections": 0,
+          "rwx_sections": 0,
+          "anomalous_sections": 0,
+          "num_imports": 0,
+          "num_exports": 0,
+          "is_packed_upx": false,
+          "high_entropy_sections": 0,
+          "packer_detected": false,
+          "packer_reasons": []
+        },
+        "timestamp": "2026-09-10T21:34:26.922588+00:00",
+        "status": "ok",
+        "error": null,
+        "reliability": "medium",
+        "reliability_weight": 0.6,
+        "evidence_group": "pe_heuristic",
+        "confidence": "Medium"
+      },
+      {
+        "source": "overlay",
+        "verdict": "benign",
+        "score": 0.0,
+        "score_raw": 0.0,
+        "score_norm": 0.0,
+        "scale": 60.0,
+        "severity": "low",
+        "operational_status": "clean",
+        "indicators": [],
+        "reasons": [
+          "no overlay signals"
+        ],
+        "metadata": {
+          "overlay_present": false,
+          "overlay_offset": 0,
+          "overlay_size": 0,
+          "overlay_ratio": 0.0,
+          "overlay_entropy": 0.0,
+          "global_entropy": 0.09,
+          "max_block_entropy": 0.0,
+          "high_entropy_block_ratio": 0.0,
+          "block_count": 0,
+          "embedded_pe_detected": false,
+          "embedded_pe_count": 0,
+          "embedded_pe_offsets": [],
+          "embedded_pe_details": [],
+          "overlay_has_strings": false,
+          "overlay_string_count": 0,
+          "overlay_suspicious_strings": [],
+          "is_known_installer": false,
+          "installer_type": null,
+          "installer_spoof_suspected": false,
+          "overlay_yara_hits": [],
+          "embedded_pe_yara_hits": []
+        },
+        "timestamp": "2026-09-10T21:34:26.922598+00:00",
+        "status": "ok",
+        "error": null,
+        "reliability": "medium",
+        "reliability_weight": 0.6,
+        "evidence_group": "overlay_forensic",
+        "confidence": "Low"
+      },
+      {
+        "source": "heuristic",
+        "verdict": "benign",
+        "score": 20.0,
+        "score_raw": 20.0,
+        "score_norm": 0.2,
+        "scale": 100.0,
+        "severity": "low",
+        "operational_status": "dangerous",
+        "indicators": [
+          {
+            "name": "no_imports (posible dropper sin IAT)",
+            "value": "no_imports (posible dropper sin IAT)",
+            "weight": 0,
+            "description": ""
+          }
+        ],
+        "reasons": [
+          "no_imports (posible dropper sin IAT)"
+        ],
+        "metadata": {
+          "risk_score": 20,
+          "risk_level": "LOW",
+          "operational_status": "DANGEROUS",
+          "triggered_indicators": [
+            "no_imports (posible dropper sin IAT)"
+          ],
+          "justification": "Risk LOW (score=20). Triggered 1 indicator(s): no_imports (posible dropper sin IAT)"
+        },
+        "timestamp": "2026-09-10T21:34:26.922608+00:00",
+        "status": "ok",
+        "error": null,
+        "reliability": "medium",
+        "reliability_weight": 0.6,
+        "evidence_group": "pe_heuristic",
+        "confidence": "Low"
+      },
+      {
+        "source": "dotnet",
+        "verdict": "benign",
+        "score": 0.0,
+        "score_raw": 0.0,
+        "score_norm": 0.0,
+        "scale": "heuristic_0_100",
+        "severity": "low",
+        "operational_status": "clean",
+        "indicators": [],
+        "reasons": [
+          "not_dotnet"
+        ],
+        "metadata": {
+          "is_dotnet": false
+        },
+        "timestamp": "2026-09-10T21:34:26.922613+00:00",
+        "status": "ok",
+        "error": null,
+        "reliability": "low",
+        "reliability_weight": 0.35,
+        "evidence_group": "dotnet_meta",
+        "confidence": "Low"
+      },
+      {
+        "source": "il_behavioral",
+        "verdict": "benign",
+        "score": 0.0,
+        "score_raw": 0.0,
+        "score_norm": 0.0,
+        "scale": "heuristic_0_100",
+        "severity": "low",
+        "operational_status": "clean",
+        "indicators": [],
+        "reasons": [
+          "not_dotnet_no_il"
+        ],
+        "metadata": {
+          "is_dotnet": false
+        },
+        "timestamp": "2026-09-10T21:34:26.922618+00:00",
+        "status": "ok",
+        "error": null,
+        "reliability": "low",
+        "reliability_weight": 0.35,
+        "evidence_group": "il_semantic",
+        "confidence": "Low"
+      }
+    ],
+    "final_verdict": {
+      "verdict": "suspicious",
+      "risk_level": "critical",
+      "operational_status": "suspicious",
+      "score": 0.2709290322580645,
+      "confidence": "High",
+      "reasons": [
+        "S=0.27 coverage=100%",
+        "contradiction: ML malicious 1.00 contradicted by 5 benign sources",
+        "contributors: ml_onnx,pe_static",
+        "ml_onnx: ml_score=0.9998 threshold=0.5 confidence=High",
+        "pe_static: no_imports"
+      ],
+      "contributing_sources": [
+        "ml_onnx",
+        "pe_static"
+      ],
+      "evidences": [
+        {
+          "source": "ml_onnx",
+          "verdict": "malicious",
+          "score": 0.9998,
+          "score_raw": 0.9998,
+          "score_norm": 0.9998,
+          "scale": "prob_0_1",
+          "severity": "critical",
+          "operational_status": "dangerous",
+          "indicators": [],
+          "reasons": [
+            "ml_score=0.9998 threshold=0.5 confidence=High"
+          ],
+          "metadata": {
+            "confidence": "High",
+            "threshold": 0.5
+          },
+          "timestamp": "2026-09-10T21:34:26.922544+00:00",
+          "status": "ok",
+          "error": null,
+          "reliability": "medium",
+          "reliability_weight": 0.6,
+          "evidence_group": "ml_prob",
+          "confidence": "High"
+        },
+        {
+          "source": "yara",
+          "verdict": "benign",
+          "score": 0.0,
+          "score_raw": 0.0,
+          "score_norm": 0.0,
+          "scale": "deterministic",
+          "severity": "low",
+          "operational_status": "clean",
+          "indicators": [],
+          "reasons": [
+            "no yara matches"
+          ],
+          "metadata": {},
+          "timestamp": "2026-09-10T21:34:26.922574+00:00",
+          "status": "ok",
+          "error": null,
+          "reliability": "medium",
+          "reliability_weight": 0.6,
+          "evidence_group": "yara_sig",
+          "confidence": "Medium"
+        },
+        {
+          "source": "pe_static",
+          "verdict": "suspicious",
+          "score": 20.0,
+          "score_raw": 20.0,
+          "score_norm": 0.4,
+          "scale": "heuristic_0_50",
+          "severity": "medium",
+          "operational_status": "suspicious",
+          "indicators": [
+            {
+              "name": "no_imports",
+              "value": 0,
+              "weight": 20,
+              "description": ""
+            }
+          ],
+          "reasons": [
+            "no_imports"
+          ],
+          "metadata": {
+            "global_entropy": 0.09,
+            "ratio_virtual_real": 1.0,
+            "num_sections": 0,
+            "executable_sections": 0,
+            "rwx_sections": 0,
+            "anomalous_sections": 0,
+            "num_imports": 0,
+            "num_exports": 0,
+            "is_packed_upx": false,
+            "high_entropy_sections": 0,
+            "packer_detected": false,
+            "packer_reasons": []
+          },
+          "timestamp": "2026-09-10T21:34:26.922588+00:00",
+          "status": "ok",
+          "error": null,
+          "reliability": "medium",
+          "reliability_weight": 0.6,
+          "evidence_group": "pe_heuristic",
+          "confidence": "Medium"
+        },
+        {
+          "source": "overlay",
+          "verdict": "benign",
+          "score": 0.0,
+          "score_raw": 0.0,
+          "score_norm": 0.0,
+          "scale": 60.0,
+          "severity": "low",
+          "operational_status": "clean",
+          "indicators": [],
+          "reasons": [
+            "no overlay signals"
+          ],
+          "metadata": {
+            "overlay_present": false,
+            "overlay_offset": 0,
+            "overlay_size": 0,
+            "overlay_ratio": 0.0,
+            "overlay_entropy": 0.0,
+            "global_entropy": 0.09,
+            "max_block_entropy": 0.0,
+            "high_entropy_block_ratio": 0.0,
+            "block_count": 0,
+            "embedded_pe_detected": false,
+            "embedded_pe_count": 0,
+            "embedded_pe_offsets": [],
+            "embedded_pe_details": [],
+            "overlay_has_strings": false,
+            "overlay_string_count": 0,
+            "overlay_suspicious_strings": [],
+            "is_known_installer": false,
+            "installer_type": null,
+            "installer_spoof_suspected": false,
+            "overlay_yara_hits": [],
+            "embedded_pe_yara_hits": []
+          },
+          "timestamp": "2026-09-10T21:34:26.922598+00:00",
+          "status": "ok",
+          "error": null,
+          "reliability": "medium",
+          "reliability_weight": 0.6,
+          "evidence_group": "overlay_forensic",
+          "confidence": "Low"
+        },
+        {
+          "source": "heuristic",
+          "verdict": "benign",
+          "score": 20.0,
+          "score_raw": 20.0,
+          "score_norm": 0.2,
+          "scale": 100.0,
+          "severity": "low",
+          "operational_status": "dangerous",
+          "indicators": [
+            {
+              "name": "no_imports (posible dropper sin IAT)",
+              "value": "no_imports (posible dropper sin IAT)",
+              "weight": 0,
+              "description": ""
+            }
+          ],
+          "reasons": [
+            "no_imports (posible dropper sin IAT)"
+          ],
+          "metadata": {
+            "risk_score": 20,
+            "risk_level": "LOW",
+            "operational_status": "DANGEROUS",
+            "triggered_indicators": [
+              "no_imports (posible dropper sin IAT)"
+            ],
+            "justification": "Risk LOW (score=20). Triggered 1 indicator(s): no_imports (posible dropper sin IAT)"
+          },
+          "timestamp": "2026-09-10T21:34:26.922608+00:00",
+          "status": "ok",
+          "error": null,
+          "reliability": "medium",
+          "reliability_weight": 0.6,
+          "evidence_group": "pe_heuristic",
+          "confidence": "Low"
+        },
+        {
+          "source": "dotnet",
+          "verdict": "benign",
+          "score": 0.0,
+          "score_raw": 0.0,
+          "score_norm": 0.0,
+          "scale": "heuristic_0_100",
+          "severity": "low",
+          "operational_status": "clean",
+          "indicators": [],
+          "reasons": [
+            "not_dotnet"
+          ],
+          "metadata": {
+            "is_dotnet": false
+          },
+          "timestamp": "2026-09-10T21:34:26.922613+00:00",
+          "status": "ok",
+          "error": null,
+          "reliability": "low",
+          "reliability_weight": 0.35,
+          "evidence_group": "dotnet_meta",
+          "confidence": "Low"
+        },
+        {
+          "source": "il_behavioral",
+          "verdict": "benign",
+          "score": 0.0,
+          "score_raw": 0.0,
+          "score_norm": 0.0,
+          "scale": "heuristic_0_100",
+          "severity": "low",
+          "operational_status": "clean",
+          "indicators": [],
+          "reasons": [
+            "not_dotnet_no_il"
+          ],
+          "metadata": {
+            "is_dotnet": false
+          },
+          "timestamp": "2026-09-10T21:34:26.922618+00:00",
+          "status": "ok",
+          "error": null,
+          "reliability": "low",
+          "reliability_weight": 0.35,
+          "evidence_group": "il_semantic",
+          "confidence": "Low"
+        }
+      ],
+      "timestamp": "2026-09-10T21:34:26.922709+00:00",
+      "ml_score_raw": 0.9998,
+      "degraded": false,
+      "coverage": 1.0,
+      "contradiction": "ML malicious 1.00 contradicted by 5 benign sources"
+    },
+    "correlation": {
+      "verdict": "suspicious",
+      "risk_level": "critical",
+      "operational_status": "suspicious",
+      "reasons": [
+        "S=0.27 coverage=100%",
+        "contradiction: ML malicious 1.00 contradicted by 5 benign sources",
+        "contributors: ml_onnx,pe_static",
+        "ml_onnx: ml_score=0.9998 threshold=0.5 confidence=High",
+        "pe_static: no_imports"
+      ],
+      "contributing_sources": [
+        "ml_onnx",
+        "pe_static"
+      ],
+      "ml_score_preserved": 0.9998
+    },
+    "degraded": false,
+    "coverage": 1.0,
+    "offline": true,
+    "queued_at": "2026-09-10T21:34:28.056738+00:00"
+  },
+  {
+    "file_name": "evil_00.exe",
+    "scan_type": "single",
+    "result": "suspicious",
+    "confidence": 0.9998,
+    "scan_time": "0.52s",
+    "features_detected": [],
+    "timestamp": "2026-09-10T21:36:27.394770+00:00",
+    "explanation": null,
+    "risk_level": "high",
+    "analysis_type": "pe",
+    "user_id": "user-security-test",
+    "user_email": "sec@test.com",
+    "yara_matches": [],
+    "was_unpacked": false,
+    "detection_phases": [
+      "YARA",
+      "ML_STATIC",
+      "OVERLAY_FORENSICS",
+      "DOTNET_ANALYSIS",
+      "CORRELATION"
+    ],
+    "is_dotnet": false,
+    "clr_version": null,
+    "assembly_name": null,
+    "obfuscator_detected": false,
+    "obfuscator_name": null,
+    "embedded_assemblies_count": 0,
+    "reflection_usage": false,
+    "dynamic_loading_detected": false,
+    "dotnet_risk_score": 0,
+    "dotnet_risk_level": "LOW",
+    "dotnet_threat_score": 0,
+    "dotnet_threat_level": "LOW",
+    "injection_detected": false,
+    "persistence_detected": false,
+    "networking_detected": false,
+    "credential_theft_detected": false,
+    "worm_behavior_detected": false,
+    "rat_detected": false,
+    "stealer_detected": false,
+    "top_family": null,
+    "family_likelihoods": {},
+    "sha256": "dcb8daf9f7b51b4b6b1e63bb86347ec9bb8b08198e03c4c890b6e3ac7144f8ea",
+    "behavioral_analysis": null,
+    "operational_status": "SUSPICIOUS",
+    "evidences": [
+      {
+        "source": "ml_onnx",
+        "verdict": "malicious",
+        "score": 0.9998,
+        "score_raw": 0.9998,
+        "score_norm": 0.9998,
+        "scale": "prob_0_1",
+        "severity": "critical",
+        "operational_status": "dangerous",
+        "indicators": [],
+        "reasons": [
+          "ml_score=0.9998 threshold=0.5 confidence=High"
+        ],
+        "metadata": {
+          "confidence": "High",
+          "threshold": 0.5
+        },
+        "timestamp": "2026-09-10T21:36:27.391695+00:00",
+        "status": "ok",
+        "error": null,
+        "reliability": "medium",
+        "reliability_weight": 0.6,
+        "evidence_group": "ml_prob",
+        "confidence": "High"
+      },
+      {
+        "source": "yara",
+        "verdict": "benign",
+        "score": 0.0,
+        "score_raw": 0.0,
+        "score_norm": 0.0,
+        "scale": "deterministic",
+        "severity": "low",
+        "operational_status": "clean",
+        "indicators": [],
+        "reasons": [
+          "no yara matches"
+        ],
+        "metadata": {},
+        "timestamp": "2026-09-10T21:36:27.391723+00:00",
+        "status": "ok",
+        "error": null,
+        "reliability": "medium",
+        "reliability_weight": 0.6,
+        "evidence_group": "yara_sig",
+        "confidence": "Medium"
+      },
+      {
+        "source": "pe_static",
+        "verdict": "suspicious",
+        "score": 20.0,
+        "score_raw": 20.0,
+        "score_norm": 0.4,
+        "scale": "heuristic_0_50",
+        "severity": "medium",
+        "operational_status": "suspicious",
+        "indicators": [
+          {
+            "name": "no_imports",
+            "value": 0,
+            "weight": 20,
+            "description": ""
+          }
+        ],
+        "reasons": [
+          "no_imports"
+        ],
+        "metadata": {
+          "global_entropy": 0.09,
+          "ratio_virtual_real": 1.0,
+          "num_sections": 0,
+          "executable_sections": 0,
+          "rwx_sections": 0,
+          "anomalous_sections": 0,
+          "num_imports": 0,
+          "num_exports": 0,
+          "is_packed_upx": false,
+          "high_entropy_sections": 0,
+          "packer_detected": false,
+          "packer_reasons": []
+        },
+        "timestamp": "2026-09-10T21:36:27.391737+00:00",
+        "status": "ok",
+        "error": null,
+        "reliability": "medium",
+        "reliability_weight": 0.6,
+        "evidence_group": "pe_heuristic",
+        "confidence": "Medium"
+      },
+      {
+        "source": "overlay",
+        "verdict": "benign",
+        "score": 0.0,
+        "score_raw": 0.0,
+        "score_norm": 0.0,
+        "scale": 60.0,
+        "severity": "low",
+        "operational_status": "clean",
+        "indicators": [],
+        "reasons": [
+          "no overlay signals"
+        ],
+        "metadata": {
+          "overlay_present": false,
+          "overlay_offset": 0,
+          "overlay_size": 0,
+          "overlay_ratio": 0.0,
+          "overlay_entropy": 0.0,
+          "global_entropy": 0.09,
+          "max_block_entropy": 0.0,
+          "high_entropy_block_ratio": 0.0,
+          "block_count": 0,
+          "embedded_pe_detected": false,
+          "embedded_pe_count": 0,
+          "embedded_pe_offsets": [],
+          "embedded_pe_details": [],
+          "overlay_has_strings": false,
+          "overlay_string_count": 0,
+          "overlay_suspicious_strings": [],
+          "is_known_installer": false,
+          "installer_type": null,
+          "installer_spoof_suspected": false,
+          "overlay_yara_hits": [],
+          "embedded_pe_yara_hits": []
+        },
+        "timestamp": "2026-09-10T21:36:27.391749+00:00",
+        "status": "ok",
+        "error": null,
+        "reliability": "medium",
+        "reliability_weight": 0.6,
+        "evidence_group": "overlay_forensic",
+        "confidence": "Low"
+      },
+      {
+        "source": "heuristic",
+        "verdict": "benign",
+        "score": 20.0,
+        "score_raw": 20.0,
+        "score_norm": 0.2,
+        "scale": 100.0,
+        "severity": "low",
+        "operational_status": "dangerous",
+        "indicators": [
+          {
+            "name": "no_imports (posible dropper sin IAT)",
+            "value": "no_imports (posible dropper sin IAT)",
+            "weight": 0,
+            "description": ""
+          }
+        ],
+        "reasons": [
+          "no_imports (posible dropper sin IAT)"
+        ],
+        "metadata": {
+          "risk_score": 20,
+          "risk_level": "LOW",
+          "operational_status": "DANGEROUS",
+          "triggered_indicators": [
+            "no_imports (posible dropper sin IAT)"
+          ],
+          "justification": "Risk LOW (score=20). Triggered 1 indicator(s): no_imports (posible dropper sin IAT)"
+        },
+        "timestamp": "2026-09-10T21:36:27.391759+00:00",
+        "status": "ok",
+        "error": null,
+        "reliability": "medium",
+        "reliability_weight": 0.6,
+        "evidence_group": "pe_heuristic",
+        "confidence": "Low"
+      },
+      {
+        "source": "dotnet",
+        "verdict": "benign",
+        "score": 0.0,
+        "score_raw": 0.0,
+        "score_norm": 0.0,
+        "scale": "heuristic_0_100",
+        "severity": "low",
+        "operational_status": "clean",
+        "indicators": [],
+        "reasons": [
+          "not_dotnet"
+        ],
+        "metadata": {
+          "is_dotnet": false
+        },
+        "timestamp": "2026-09-10T21:36:27.391766+00:00",
+        "status": "ok",
+        "error": null,
+        "reliability": "low",
+        "reliability_weight": 0.35,
+        "evidence_group": "dotnet_meta",
+        "confidence": "Low"
+      },
+      {
+        "source": "il_behavioral",
+        "verdict": "benign",
+        "score": 0.0,
+        "score_raw": 0.0,
+        "score_norm": 0.0,
+        "scale": "heuristic_0_100",
+        "severity": "low",
+        "operational_status": "clean",
+        "indicators": [],
+        "reasons": [
+          "not_dotnet_no_il"
+        ],
+        "metadata": {
+          "is_dotnet": false
+        },
+        "timestamp": "2026-09-10T21:36:27.391771+00:00",
+        "status": "ok",
+        "error": null,
+        "reliability": "low",
+        "reliability_weight": 0.35,
+        "evidence_group": "il_semantic",
+        "confidence": "Low"
+      }
+    ],
+    "final_verdict": {
+      "verdict": "suspicious",
+      "risk_level": "critical",
+      "operational_status": "suspicious",
+      "score": 0.2709290322580645,
+      "confidence": "High",
+      "reasons": [
+        "S=0.27 coverage=100%",
+        "contradiction: ML malicious 1.00 contradicted by 5 benign sources",
+        "contributors: ml_onnx,pe_static",
+        "ml_onnx: ml_score=0.9998 threshold=0.5 confidence=High",
+        "pe_static: no_imports"
+      ],
+      "contributing_sources": [
+        "ml_onnx",
+        "pe_static"
+      ],
+      "evidences": [
+        {
+          "source": "ml_onnx",
+          "verdict": "malicious",
+          "score": 0.9998,
+          "score_raw": 0.9998,
+          "score_norm": 0.9998,
+          "scale": "prob_0_1",
+          "severity": "critical",
+          "operational_status": "dangerous",
+          "indicators": [],
+          "reasons": [
+            "ml_score=0.9998 threshold=0.5 confidence=High"
+          ],
+          "metadata": {
+            "confidence": "High",
+            "threshold": 0.5
+          },
+          "timestamp": "2026-09-10T21:36:27.391695+00:00",
+          "status": "ok",
+          "error": null,
+          "reliability": "medium",
+          "reliability_weight": 0.6,
+          "evidence_group": "ml_prob",
+          "confidence": "High"
+        },
+        {
+          "source": "yara",
+          "verdict": "benign",
+          "score": 0.0,
+          "score_raw": 0.0,
+          "score_norm": 0.0,
+          "scale": "deterministic",
+          "severity": "low",
+          "operational_status": "clean",
+          "indicators": [],
+          "reasons": [
+            "no yara matches"
+          ],
+          "metadata": {},
+          "timestamp": "2026-09-10T21:36:27.391723+00:00",
+          "status": "ok",
+          "error": null,
+          "reliability": "medium",
+          "reliability_weight": 0.6,
+          "evidence_group": "yara_sig",
+          "confidence": "Medium"
+        },
+        {
+          "source": "pe_static",
+          "verdict": "suspicious",
+          "score": 20.0,
+          "score_raw": 20.0,
+          "score_norm": 0.4,
+          "scale": "heuristic_0_50",
+          "severity": "medium",
+          "operational_status": "suspicious",
+          "indicators": [
+            {
+              "name": "no_imports",
+              "value": 0,
+              "weight": 20,
+              "description": ""
+            }
+          ],
+          "reasons": [
+            "no_imports"
+          ],
+          "metadata": {
+            "global_entropy": 0.09,
+            "ratio_virtual_real": 1.0,
+            "num_sections": 0,
+            "executable_sections": 0,
+            "rwx_sections": 0,
+            "anomalous_sections": 0,
+            "num_imports": 0,
+            "num_exports": 0,
+            "is_packed_upx": false,
+            "high_entropy_sections": 0,
+            "packer_detected": false,
+            "packer_reasons": []
+          },
+          "timestamp": "2026-09-10T21:36:27.391737+00:00",
+          "status": "ok",
+          "error": null,
+          "reliability": "medium",
+          "reliability_weight": 0.6,
+          "evidence_group": "pe_heuristic",
+          "confidence": "Medium"
+        },
+        {
+          "source": "overlay",
+          "verdict": "benign",
+          "score": 0.0,
+          "score_raw": 0.0,
+          "score_norm": 0.0,
+          "scale": 60.0,
+          "severity": "low",
+          "operational_status": "clean",
+          "indicators": [],
+          "reasons": [
+            "no overlay signals"
+          ],
+          "metadata": {
+            "overlay_present": false,
+            "overlay_offset": 0,
+            "overlay_size": 0,
+            "overlay_ratio": 0.0,
+            "overlay_entropy": 0.0,
+            "global_entropy": 0.09,
+            "max_block_entropy": 0.0,
+            "high_entropy_block_ratio": 0.0,
+            "block_count": 0,
+            "embedded_pe_detected": false,
+            "embedded_pe_count": 0,
+            "embedded_pe_offsets": [],
+            "embedded_pe_details": [],
+            "overlay_has_strings": false,
+            "overlay_string_count": 0,
+            "overlay_suspicious_strings": [],
+            "is_known_installer": false,
+            "installer_type": null,
+            "installer_spoof_suspected": false,
+            "overlay_yara_hits": [],
+            "embedded_pe_yara_hits": []
+          },
+          "timestamp": "2026-09-10T21:36:27.391749+00:00",
+          "status": "ok",
+          "error": null,
+          "reliability": "medium",
+          "reliability_weight": 0.6,
+          "evidence_group": "overlay_forensic",
+          "confidence": "Low"
+        },
+        {
+          "source": "heuristic",
+          "verdict": "benign",
+          "score": 20.0,
+          "score_raw": 20.0,
+          "score_norm": 0.2,
+          "scale": 100.0,
+          "severity": "low",
+          "operational_status": "dangerous",
+          "indicators": [
+            {
+              "name": "no_imports (posible dropper sin IAT)",
+              "value": "no_imports (posible dropper sin IAT)",
+              "weight": 0,
+              "description": ""
+            }
+          ],
+          "reasons": [
+            "no_imports (posible dropper sin IAT)"
+          ],
+          "metadata": {
+            "risk_score": 20,
+            "risk_level": "LOW",
+            "operational_status": "DANGEROUS",
+            "triggered_indicators": [
+              "no_imports (posible dropper sin IAT)"
+            ],
+            "justification": "Risk LOW (score=20). Triggered 1 indicator(s): no_imports (posible dropper sin IAT)"
+          },
+          "timestamp": "2026-09-10T21:36:27.391759+00:00",
+          "status": "ok",
+          "error": null,
+          "reliability": "medium",
+          "reliability_weight": 0.6,
+          "evidence_group": "pe_heuristic",
+          "confidence": "Low"
+        },
+        {
+          "source": "dotnet",
+          "verdict": "benign",
+          "score": 0.0,
+          "score_raw": 0.0,
+          "score_norm": 0.0,
+          "scale": "heuristic_0_100",
+          "severity": "low",
+          "operational_status": "clean",
+          "indicators": [],
+          "reasons": [
+            "not_dotnet"
+          ],
+          "metadata": {
+            "is_dotnet": false
+          },
+          "timestamp": "2026-09-10T21:36:27.391766+00:00",
+          "status": "ok",
+          "error": null,
+          "reliability": "low",
+          "reliability_weight": 0.35,
+          "evidence_group": "dotnet_meta",
+          "confidence": "Low"
+        },
+        {
+          "source": "il_behavioral",
+          "verdict": "benign",
+          "score": 0.0,
+          "score_raw": 0.0,
+          "score_norm": 0.0,
+          "scale": "heuristic_0_100",
+          "severity": "low",
+          "operational_status": "clean",
+          "indicators": [],
+          "reasons": [
+            "not_dotnet_no_il"
+          ],
+          "metadata": {
+            "is_dotnet": false
+          },
+          "timestamp": "2026-09-10T21:36:27.391771+00:00",
+          "status": "ok",
+          "error": null,
+          "reliability": "low",
+          "reliability_weight": 0.35,
+          "evidence_group": "il_semantic",
+          "confidence": "Low"
+        }
+      ],
+      "timestamp": "2026-09-10T21:36:27.391862+00:00",
+      "ml_score_raw": 0.9998,
+      "degraded": false,
+      "coverage": 1.0,
+      "contradiction": "ML malicious 1.00 contradicted by 5 benign sources"
+    },
+    "correlation": {
+      "verdict": "suspicious",
+      "risk_level": "critical",
+      "operational_status": "suspicious",
+      "reasons": [
+        "S=0.27 coverage=100%",
+        "contradiction: ML malicious 1.00 contradicted by 5 benign sources",
+        "contributors: ml_onnx,pe_static",
+        "ml_onnx: ml_score=0.9998 threshold=0.5 confidence=High",
+        "pe_static: no_imports"
+      ],
+      "contributing_sources": [
+        "ml_onnx",
+        "pe_static"
+      ],
+      "ml_score_preserved": 0.9998
+    },
+    "degraded": false,
+    "coverage": 1.0,
+    "offline": true,
+    "queued_at": "2026-09-10T21:36:28.126790+00:00"
+  },
+  {
+    "file_name": "evil_00.exe",
+    "scan_type": "single",
+    "result": "suspicious",
+    "confidence": 0.9998,
+    "scan_time": "0.63s",
+    "features_detected": [],
+    "timestamp": "2026-09-11T02:34:17.033926+00:00",
+    "explanation": null,
+    "risk_level": "high",
+    "analysis_type": "pe",
+    "user_id": "user-security-test",
+    "user_email": "sec@test.com",
+    "yara_matches": [],
+    "was_unpacked": false,
+    "detection_phases": [
+      "YARA",
+      "ML_STATIC",
+      "OVERLAY_FORENSICS",
+      "DOTNET_ANALYSIS",
+      "CORRELATION"
+    ],
+    "is_dotnet": false,
+    "clr_version": null,
+    "assembly_name": null,
+    "obfuscator_detected": false,
+    "obfuscator_name": null,
+    "embedded_assemblies_count": 0,
+    "reflection_usage": false,
+    "dynamic_loading_detected": false,
+    "dotnet_risk_score": 0,
+    "dotnet_risk_level": "LOW",
+    "dotnet_threat_score": 0,
+    "dotnet_threat_level": "LOW",
+    "injection_detected": false,
+    "persistence_detected": false,
+    "networking_detected": false,
+    "credential_theft_detected": false,
+    "worm_behavior_detected": false,
+    "rat_detected": false,
+    "stealer_detected": false,
+    "top_family": null,
+    "family_likelihoods": {},
+    "sha256": "dcb8daf9f7b51b4b6b1e63bb86347ec9bb8b08198e03c4c890b6e3ac7144f8ea",
+    "behavioral_analysis": null,
+    "operational_status": "SUSPICIOUS",
+    "evidences": [
+      {
+        "source": "ml_onnx",
+        "verdict": "malicious",
+        "score": 0.9998,
+        "score_raw": 0.9998,
+        "score_norm": 0.9998,
+        "scale": "prob_0_1",
+        "severity": "critical",
+        "operational_status": "dangerous",
+        "indicators": [],
+        "reasons": [
+          "ml_score=0.9998 threshold=0.5 confidence=High"
+        ],
+        "metadata": {
+          "confidence": "High",
+          "threshold": 0.5
+        },
+        "timestamp": "2026-09-11T02:34:17.026251+00:00",
+        "status": "ok",
+        "error": null,
+        "reliability": "medium",
+        "reliability_weight": 0.6,
+        "evidence_group": "ml_prob",
+        "confidence": "High"
+      },
+      {
+        "source": "yara",
+        "verdict": "benign",
+        "score": 0.0,
+        "score_raw": 0.0,
+        "score_norm": 0.0,
+        "scale": "deterministic",
+        "severity": "low",
+        "operational_status": "clean",
+        "indicators": [],
+        "reasons": [
+          "no yara matches"
+        ],
+        "metadata": {},
+        "timestamp": "2026-09-11T02:34:17.026383+00:00",
+        "status": "ok",
+        "error": null,
+        "reliability": "medium",
+        "reliability_weight": 0.6,
+        "evidence_group": "yara_sig",
+        "confidence": "Medium"
+      },
+      {
+        "source": "pe_static",
+        "verdict": "suspicious",
+        "score": 20.0,
+        "score_raw": 20.0,
+        "score_norm": 0.4,
+        "scale": "heuristic_0_50",
+        "severity": "medium",
+        "operational_status": "suspicious",
+        "indicators": [
+          {
+            "name": "no_imports",
+            "value": 0,
+            "weight": 20,
+            "description": ""
+          }
+        ],
+        "reasons": [
+          "no_imports"
+        ],
+        "metadata": {
+          "global_entropy": 0.09,
+          "ratio_virtual_real": 1.0,
+          "num_sections": 0,
+          "executable_sections": 0,
+          "rwx_sections": 0,
+          "anomalous_sections": 0,
+          "num_imports": 0,
+          "num_exports": 0,
+          "is_packed_upx": false,
+          "high_entropy_sections": 0,
+          "packer_detected": false,
+          "packer_reasons": []
+        },
+        "timestamp": "2026-09-11T02:34:17.026418+00:00",
+        "status": "ok",
+        "error": null,
+        "reliability": "medium",
+        "reliability_weight": 0.6,
+        "evidence_group": "pe_heuristic",
+        "confidence": "Medium"
+      },
+      {
+        "source": "overlay",
+        "verdict": "benign",
+        "score": 0.0,
+        "score_raw": 0.0,
+        "score_norm": 0.0,
+        "scale": 60.0,
+        "severity": "low",
+        "operational_status": "clean",
+        "indicators": [],
+        "reasons": [
+          "no overlay signals"
+        ],
+        "metadata": {
+          "overlay_present": false,
+          "overlay_offset": 0,
+          "overlay_size": 0,
+          "overlay_ratio": 0.0,
+          "overlay_entropy": 0.0,
+          "global_entropy": 0.09,
+          "max_block_entropy": 0.0,
+          "high_entropy_block_ratio": 0.0,
+          "block_count": 0,
+          "embedded_pe_detected": false,
+          "embedded_pe_count": 0,
+          "embedded_pe_offsets": [],
+          "embedded_pe_details": [],
+          "overlay_has_strings": false,
+          "overlay_string_count": 0,
+          "overlay_suspicious_strings": [],
+          "is_known_installer": false,
+          "installer_type": null,
+          "installer_spoof_suspected": false,
+          "overlay_yara_hits": [],
+          "embedded_pe_yara_hits": []
+        },
+        "timestamp": "2026-09-11T02:34:17.026447+00:00",
+        "status": "ok",
+        "error": null,
+        "reliability": "medium",
+        "reliability_weight": 0.6,
+        "evidence_group": "overlay_forensic",
+        "confidence": "Low"
+      },
+      {
+        "source": "heuristic",
+        "verdict": "benign",
+        "score": 20.0,
+        "score_raw": 20.0,
+        "score_norm": 0.2,
+        "scale": 100.0,
+        "severity": "low",
+        "operational_status": "dangerous",
+        "indicators": [
+          {
+            "name": "no_imports (posible dropper sin IAT)",
+            "value": "no_imports (posible dropper sin IAT)",
+            "weight": 0,
+            "description": ""
+          }
+        ],
+        "reasons": [
+          "no_imports (posible dropper sin IAT)"
+        ],
+        "metadata": {
+          "risk_score": 20,
+          "risk_level": "LOW",
+          "operational_status": "DANGEROUS",
+          "triggered_indicators": [
+            "no_imports (posible dropper sin IAT)"
+          ],
+          "justification": "Risk LOW (score=20). Triggered 1 indicator(s): no_imports (posible dropper sin IAT)"
+        },
+        "timestamp": "2026-09-11T02:34:17.026476+00:00",
+        "status": "ok",
+        "error": null,
+        "reliability": "medium",
+        "reliability_weight": 0.6,
+        "evidence_group": "pe_heuristic",
+        "confidence": "Low"
+      },
+      {
+        "source": "dotnet",
+        "verdict": "benign",
+        "score": 0.0,
+        "score_raw": 0.0,
+        "score_norm": 0.0,
+        "scale": "heuristic_0_100",
+        "severity": "low",
+        "operational_status": "clean",
+        "indicators": [],
+        "reasons": [
+          "not_dotnet"
+        ],
+        "metadata": {
+          "is_dotnet": false
+        },
+        "timestamp": "2026-09-11T02:34:17.026487+00:00",
+        "status": "ok",
+        "error": null,
+        "reliability": "low",
+        "reliability_weight": 0.35,
+        "evidence_group": "dotnet_meta",
+        "confidence": "Low"
+      },
+      {
+        "source": "il_behavioral",
+        "verdict": "benign",
+        "score": 0.0,
+        "score_raw": 0.0,
+        "score_norm": 0.0,
+        "scale": "heuristic_0_100",
+        "severity": "low",
+        "operational_status": "clean",
+        "indicators": [],
+        "reasons": [
+          "not_dotnet_no_il"
+        ],
+        "metadata": {
+          "is_dotnet": false
+        },
+        "timestamp": "2026-09-11T02:34:17.026532+00:00",
+        "status": "ok",
+        "error": null,
+        "reliability": "low",
+        "reliability_weight": 0.35,
+        "evidence_group": "il_semantic",
+        "confidence": "Low"
+      }
+    ],
+    "final_verdict": {
+      "verdict": "suspicious",
+      "risk_level": "critical",
+      "operational_status": "suspicious",
+      "score": 0.2709290322580645,
+      "confidence": "High",
+      "reasons": [
+        "S=0.27 coverage=100%",
+        "contradiction: ML malicious 1.00 contradicted by 5 benign sources",
+        "contributors: ml_onnx,pe_static",
+        "ml_onnx: ml_score=0.9998 threshold=0.5 confidence=High",
+        "pe_static: no_imports"
+      ],
+      "contributing_sources": [
+        "ml_onnx",
+        "pe_static"
+      ],
+      "evidences": [
+        {
+          "source": "ml_onnx",
+          "verdict": "malicious",
+          "score": 0.9998,
+          "score_raw": 0.9998,
+          "score_norm": 0.9998,
+          "scale": "prob_0_1",
+          "severity": "critical",
+          "operational_status": "dangerous",
+          "indicators": [],
+          "reasons": [
+            "ml_score=0.9998 threshold=0.5 confidence=High"
+          ],
+          "metadata": {
+            "confidence": "High",
+            "threshold": 0.5
+          },
+          "timestamp": "2026-09-11T02:34:17.026251+00:00",
+          "status": "ok",
+          "error": null,
+          "reliability": "medium",
+          "reliability_weight": 0.6,
+          "evidence_group": "ml_prob",
+          "confidence": "High"
+        },
+        {
+          "source": "yara",
+          "verdict": "benign",
+          "score": 0.0,
+          "score_raw": 0.0,
+          "score_norm": 0.0,
+          "scale": "deterministic",
+          "severity": "low",
+          "operational_status": "clean",
+          "indicators": [],
+          "reasons": [
+            "no yara matches"
+          ],
+          "metadata": {},
+          "timestamp": "2026-09-11T02:34:17.026383+00:00",
+          "status": "ok",
+          "error": null,
+          "reliability": "medium",
+          "reliability_weight": 0.6,
+          "evidence_group": "yara_sig",
+          "confidence": "Medium"
+        },
+        {
+          "source": "pe_static",
+          "verdict": "suspicious",
+          "score": 20.0,
+          "score_raw": 20.0,
+          "score_norm": 0.4,
+          "scale": "heuristic_0_50",
+          "severity": "medium",
+          "operational_status": "suspicious",
+          "indicators": [
+            {
+              "name": "no_imports",
+              "value": 0,
+              "weight": 20,
+              "description": ""
+            }
+          ],
+          "reasons": [
+            "no_imports"
+          ],
+          "metadata": {
+            "global_entropy": 0.09,
+            "ratio_virtual_real": 1.0,
+            "num_sections": 0,
+            "executable_sections": 0,
+            "rwx_sections": 0,
+            "anomalous_sections": 0,
+            "num_imports": 0,
+            "num_exports": 0,
+            "is_packed_upx": false,
+            "high_entropy_sections": 0,
+            "packer_detected": false,
+            "packer_reasons": []
+          },
+          "timestamp": "2026-09-11T02:34:17.026418+00:00",
+          "status": "ok",
+          "error": null,
+          "reliability": "medium",
+          "reliability_weight": 0.6,
+          "evidence_group": "pe_heuristic",
+          "confidence": "Medium"
+        },
+        {
+          "source": "overlay",
+          "verdict": "benign",
+          "score": 0.0,
+          "score_raw": 0.0,
+          "score_norm": 0.0,
+          "scale": 60.0,
+          "severity": "low",
+          "operational_status": "clean",
+          "indicators": [],
+          "reasons": [
+            "no overlay signals"
+          ],
+          "metadata": {
+            "overlay_present": false,
+            "overlay_offset": 0,
+            "overlay_size": 0,
+            "overlay_ratio": 0.0,
+            "overlay_entropy": 0.0,
+            "global_entropy": 0.09,
+            "max_block_entropy": 0.0,
+            "high_entropy_block_ratio": 0.0,
+            "block_count": 0,
+            "embedded_pe_detected": false,
+            "embedded_pe_count": 0,
+            "embedded_pe_offsets": [],
+            "embedded_pe_details": [],
+            "overlay_has_strings": false,
+            "overlay_string_count": 0,
+            "overlay_suspicious_strings": [],
+            "is_known_installer": false,
+            "installer_type": null,
+            "installer_spoof_suspected": false,
+            "overlay_yara_hits": [],
+            "embedded_pe_yara_hits": []
+          },
+          "timestamp": "2026-09-11T02:34:17.026447+00:00",
+          "status": "ok",
+          "error": null,
+          "reliability": "medium",
+          "reliability_weight": 0.6,
+          "evidence_group": "overlay_forensic",
+          "confidence": "Low"
+        },
+        {
+          "source": "heuristic",
+          "verdict": "benign",
+          "score": 20.0,
+          "score_raw": 20.0,
+          "score_norm": 0.2,
+          "scale": 100.0,
+          "severity": "low",
+          "operational_status": "dangerous",
+          "indicators": [
+            {
+              "name": "no_imports (posible dropper sin IAT)",
+              "value": "no_imports (posible dropper sin IAT)",
+              "weight": 0,
+              "description": ""
+            }
+          ],
+          "reasons": [
+            "no_imports (posible dropper sin IAT)"
+          ],
+          "metadata": {
+            "risk_score": 20,
+            "risk_level": "LOW",
+            "operational_status": "DANGEROUS",
+            "triggered_indicators": [
+              "no_imports (posible dropper sin IAT)"
+            ],
+            "justification": "Risk LOW (score=20). Triggered 1 indicator(s): no_imports (posible dropper sin IAT)"
+          },
+          "timestamp": "2026-09-11T02:34:17.026476+00:00",
+          "status": "ok",
+          "error": null,
+          "reliability": "medium",
+          "reliability_weight": 0.6,
+          "evidence_group": "pe_heuristic",
+          "confidence": "Low"
+        },
+        {
+          "source": "dotnet",
+          "verdict": "benign",
+          "score": 0.0,
+          "score_raw": 0.0,
+          "score_norm": 0.0,
+          "scale": "heuristic_0_100",
+          "severity": "low",
+          "operational_status": "clean",
+          "indicators": [],
+          "reasons": [
+            "not_dotnet"
+          ],
+          "metadata": {
+            "is_dotnet": false
+          },
+          "timestamp": "2026-09-11T02:34:17.026487+00:00",
+          "status": "ok",
+          "error": null,
+          "reliability": "low",
+          "reliability_weight": 0.35,
+          "evidence_group": "dotnet_meta",
+          "confidence": "Low"
+        },
+        {
+          "source": "il_behavioral",
+          "verdict": "benign",
+          "score": 0.0,
+          "score_raw": 0.0,
+          "score_norm": 0.0,
+          "scale": "heuristic_0_100",
+          "severity": "low",
+          "operational_status": "clean",
+          "indicators": [],
+          "reasons": [
+            "not_dotnet_no_il"
+          ],
+          "metadata": {
+            "is_dotnet": false
+          },
+          "timestamp": "2026-09-11T02:34:17.026532+00:00",
+          "status": "ok",
+          "error": null,
+          "reliability": "low",
+          "reliability_weight": 0.35,
+          "evidence_group": "il_semantic",
+          "confidence": "Low"
+        }
+      ],
+      "timestamp": "2026-09-11T02:34:17.026741+00:00",
+      "ml_score_raw": 0.9998,
+      "degraded": false,
+      "coverage": 1.0,
+      "contradiction": "ML malicious 1.00 contradicted by 5 benign sources"
+    },
+    "correlation": {
+      "verdict": "suspicious",
+      "risk_level": "critical",
+      "operational_status": "suspicious",
+      "reasons": [
+        "S=0.27 coverage=100%",
+        "contradiction: ML malicious 1.00 contradicted by 5 benign sources",
+        "contributors: ml_onnx,pe_static",
+        "ml_onnx: ml_score=0.9998 threshold=0.5 confidence=High",
+        "pe_static: no_imports"
+      ],
+      "contributing_sources": [
+        "ml_onnx",
+        "pe_static"
+      ],
+      "ml_score_preserved": 0.9998
+    },
+    "degraded": false,
+    "coverage": 1.0,
+    "offline": true,
+    "queued_at": "2026-09-11T02:34:19.898556+00:00"
+  },
+  {
+    "file_name": "evil_00.exe",
+    "scan_type": "single",
+    "result": "suspicious",
+    "confidence": 0.9998,
+    "scan_time": "0.41s",
+    "features_detected": [],
+    "timestamp": "2026-09-11T02:35:33.488888+00:00",
+    "explanation": null,
+    "risk_level": "high",
+    "analysis_type": "pe",
+    "user_id": "user-security-test",
+    "user_email": "sec@test.com",
+    "yara_matches": [],
+    "was_unpacked": false,
+    "detection_phases": [
+      "YARA",
+      "ML_STATIC",
+      "OVERLAY_FORENSICS",
+      "DOTNET_ANALYSIS",
+      "CORRELATION"
+    ],
+    "is_dotnet": false,
+    "clr_version": null,
+    "assembly_name": null,
+    "obfuscator_detected": false,
+    "obfuscator_name": null,
+    "embedded_assemblies_count": 0,
+    "reflection_usage": false,
+    "dynamic_loading_detected": false,
+    "dotnet_risk_score": 0,
+    "dotnet_risk_level": "LOW",
+    "dotnet_threat_score": 0,
+    "dotnet_threat_level": "LOW",
+    "injection_detected": false,
+    "persistence_detected": false,
+    "networking_detected": false,
+    "credential_theft_detected": false,
+    "worm_behavior_detected": false,
+    "rat_detected": false,
+    "stealer_detected": false,
+    "top_family": null,
+    "family_likelihoods": {},
+    "sha256": "dcb8daf9f7b51b4b6b1e63bb86347ec9bb8b08198e03c4c890b6e3ac7144f8ea",
+    "behavioral_analysis": null,
+    "operational_status": "SUSPICIOUS",
+    "evidences": [
+      {
+        "source": "ml_onnx",
+        "verdict": "malicious",
+        "score": 0.9998,
+        "score_raw": 0.9998,
+        "score_norm": 0.9998,
+        "scale": "prob_0_1",
+        "severity": "critical",
+        "operational_status": "dangerous",
+        "indicators": [],
+        "reasons": [
+          "ml_score=0.9998 threshold=0.5 confidence=High"
+        ],
+        "metadata": {
+          "confidence": "High",
+          "threshold": 0.5
+        },
+        "timestamp": "2026-09-11T02:35:33.485877+00:00",
+        "status": "ok",
+        "error": null,
+        "reliability": "medium",
+        "reliability_weight": 0.6,
+        "evidence_group": "ml_prob",
+        "confidence": "High"
+      },
+      {
+        "source": "yara",
+        "verdict": "benign",
+        "score": 0.0,
+        "score_raw": 0.0,
+        "score_norm": 0.0,
+        "scale": "deterministic",
+        "severity": "low",
+        "operational_status": "clean",
+        "indicators": [],
+        "reasons": [
+          "no yara matches"
+        ],
+        "metadata": {},
+        "timestamp": "2026-09-11T02:35:33.485906+00:00",
+        "status": "ok",
+        "error": null,
+        "reliability": "medium",
+        "reliability_weight": 0.6,
+        "evidence_group": "yara_sig",
+        "confidence": "Medium"
+      },
+      {
+        "source": "pe_static",
+        "verdict": "suspicious",
+        "score": 20.0,
+        "score_raw": 20.0,
+        "score_norm": 0.4,
+        "scale": "heuristic_0_50",
+        "severity": "medium",
+        "operational_status": "suspicious",
+        "indicators": [
+          {
+            "name": "no_imports",
+            "value": 0,
+            "weight": 20,
+            "description": ""
+          }
+        ],
+        "reasons": [
+          "no_imports"
+        ],
+        "metadata": {
+          "global_entropy": 0.09,
+          "ratio_virtual_real": 1.0,
+          "num_sections": 0,
+          "executable_sections": 0,
+          "rwx_sections": 0,
+          "anomalous_sections": 0,
+          "num_imports": 0,
+          "num_exports": 0,
+          "is_packed_upx": false,
+          "high_entropy_sections": 0,
+          "packer_detected": false,
+          "packer_reasons": []
+        },
+        "timestamp": "2026-09-11T02:35:33.485922+00:00",
+        "status": "ok",
+        "error": null,
+        "reliability": "medium",
+        "reliability_weight": 0.6,
+        "evidence_group": "pe_heuristic",
+        "confidence": "Medium"
+      },
+      {
+        "source": "overlay",
+        "verdict": "benign",
+        "score": 0.0,
+        "score_raw": 0.0,
+        "score_norm": 0.0,
+        "scale": 60.0,
+        "severity": "low",
+        "operational_status": "clean",
+        "indicators": [],
+        "reasons": [
+          "no overlay signals"
+        ],
+        "metadata": {
+          "overlay_present": false,
+          "overlay_offset": 0,
+          "overlay_size": 0,
+          "overlay_ratio": 0.0,
+          "overlay_entropy": 0.0,
+          "global_entropy": 0.09,
+          "max_block_entropy": 0.0,
+          "high_entropy_block_ratio": 0.0,
+          "block_count": 0,
+          "embedded_pe_detected": false,
+          "embedded_pe_count": 0,
+          "embedded_pe_offsets": [],
+          "embedded_pe_details": [],
+          "overlay_has_strings": false,
+          "overlay_string_count": 0,
+          "overlay_suspicious_strings": [],
+          "is_known_installer": false,
+          "installer_type": null,
+          "installer_spoof_suspected": false,
+          "overlay_yara_hits": [],
+          "embedded_pe_yara_hits": []
+        },
+        "timestamp": "2026-09-11T02:35:33.485933+00:00",
+        "status": "ok",
+        "error": null,
+        "reliability": "medium",
+        "reliability_weight": 0.6,
+        "evidence_group": "overlay_forensic",
+        "confidence": "Low"
+      },
+      {
+        "source": "heuristic",
+        "verdict": "benign",
+        "score": 20.0,
+        "score_raw": 20.0,
+        "score_norm": 0.2,
+        "scale": 100.0,
+        "severity": "low",
+        "operational_status": "dangerous",
+        "indicators": [
+          {
+            "name": "no_imports (posible dropper sin IAT)",
+            "value": "no_imports (posible dropper sin IAT)",
+            "weight": 0,
+            "description": ""
+          }
+        ],
+        "reasons": [
+          "no_imports (posible dropper sin IAT)"
+        ],
+        "metadata": {
+          "risk_score": 20,
+          "risk_level": "LOW",
+          "operational_status": "DANGEROUS",
+          "triggered_indicators": [
+            "no_imports (posible dropper sin IAT)"
+          ],
+          "justification": "Risk LOW (score=20). Triggered 1 indicator(s): no_imports (posible dropper sin IAT)"
+        },
+        "timestamp": "2026-09-11T02:35:33.485944+00:00",
+        "status": "ok",
+        "error": null,
+        "reliability": "medium",
+        "reliability_weight": 0.6,
+        "evidence_group": "pe_heuristic",
+        "confidence": "Low"
+      },
+      {
+        "source": "dotnet",
+        "verdict": "benign",
+        "score": 0.0,
+        "score_raw": 0.0,
+        "score_norm": 0.0,
+        "scale": "heuristic_0_100",
+        "severity": "low",
+        "operational_status": "clean",
+        "indicators": [],
+        "reasons": [
+          "not_dotnet"
+        ],
+        "metadata": {
+          "is_dotnet": false
+        },
+        "timestamp": "2026-09-11T02:35:33.485950+00:00",
+        "status": "ok",
+        "error": null,
+        "reliability": "low",
+        "reliability_weight": 0.35,
+        "evidence_group": "dotnet_meta",
+        "confidence": "Low"
+      },
+      {
+        "source": "il_behavioral",
+        "verdict": "benign",
+        "score": 0.0,
+        "score_raw": 0.0,
+        "score_norm": 0.0,
+        "scale": "heuristic_0_100",
+        "severity": "low",
+        "operational_status": "clean",
+        "indicators": [],
+        "reasons": [
+          "not_dotnet_no_il"
+        ],
+        "metadata": {
+          "is_dotnet": false
+        },
+        "timestamp": "2026-09-11T02:35:33.485956+00:00",
+        "status": "ok",
+        "error": null,
+        "reliability": "low",
+        "reliability_weight": 0.35,
+        "evidence_group": "il_semantic",
+        "confidence": "Low"
+      }
+    ],
+    "final_verdict": {
+      "verdict": "suspicious",
+      "risk_level": "critical",
+      "operational_status": "suspicious",
+      "score": 0.2709290322580645,
+      "confidence": "High",
+      "reasons": [
+        "S=0.27 coverage=100%",
+        "contradiction: ML malicious 1.00 contradicted by 5 benign sources",
+        "contributors: ml_onnx,pe_static",
+        "ml_onnx: ml_score=0.9998 threshold=0.5 confidence=High",
+        "pe_static: no_imports"
+      ],
+      "contributing_sources": [
+        "ml_onnx",
+        "pe_static"
+      ],
+      "evidences": [
+        {
+          "source": "ml_onnx",
+          "verdict": "malicious",
+          "score": 0.9998,
+          "score_raw": 0.9998,
+          "score_norm": 0.9998,
+          "scale": "prob_0_1",
+          "severity": "critical",
+          "operational_status": "dangerous",
+          "indicators": [],
+          "reasons": [
+            "ml_score=0.9998 threshold=0.5 confidence=High"
+          ],
+          "metadata": {
+            "confidence": "High",
+            "threshold": 0.5
+          },
+          "timestamp": "2026-09-11T02:35:33.485877+00:00",
+          "status": "ok",
+          "error": null,
+          "reliability": "medium",
+          "reliability_weight": 0.6,
+          "evidence_group": "ml_prob",
+          "confidence": "High"
+        },
+        {
+          "source": "yara",
+          "verdict": "benign",
+          "score": 0.0,
+          "score_raw": 0.0,
+          "score_norm": 0.0,
+          "scale": "deterministic",
+          "severity": "low",
+          "operational_status": "clean",
+          "indicators": [],
+          "reasons": [
+            "no yara matches"
+          ],
+          "metadata": {},
+          "timestamp": "2026-09-11T02:35:33.485906+00:00",
+          "status": "ok",
+          "error": null,
+          "reliability": "medium",
+          "reliability_weight": 0.6,
+          "evidence_group": "yara_sig",
+          "confidence": "Medium"
+        },
+        {
+          "source": "pe_static",
+          "verdict": "suspicious",
+          "score": 20.0,
+          "score_raw": 20.0,
+          "score_norm": 0.4,
+          "scale": "heuristic_0_50",
+          "severity": "medium",
+          "operational_status": "suspicious",
+          "indicators": [
+            {
+              "name": "no_imports",
+              "value": 0,
+              "weight": 20,
+              "description": ""
+            }
+          ],
+          "reasons": [
+            "no_imports"
+          ],
+          "metadata": {
+            "global_entropy": 0.09,
+            "ratio_virtual_real": 1.0,
+            "num_sections": 0,
+            "executable_sections": 0,
+            "rwx_sections": 0,
+            "anomalous_sections": 0,
+            "num_imports": 0,
+            "num_exports": 0,
+            "is_packed_upx": false,
+            "high_entropy_sections": 0,
+            "packer_detected": false,
+            "packer_reasons": []
+          },
+          "timestamp": "2026-09-11T02:35:33.485922+00:00",
+          "status": "ok",
+          "error": null,
+          "reliability": "medium",
+          "reliability_weight": 0.6,
+          "evidence_group": "pe_heuristic",
+          "confidence": "Medium"
+        },
+        {
+          "source": "overlay",
+          "verdict": "benign",
+          "score": 0.0,
+          "score_raw": 0.0,
+          "score_norm": 0.0,
+          "scale": 60.0,
+          "severity": "low",
+          "operational_status": "clean",
+          "indicators": [],
+          "reasons": [
+            "no overlay signals"
+          ],
+          "metadata": {
+            "overlay_present": false,
+            "overlay_offset": 0,
+            "overlay_size": 0,
+            "overlay_ratio": 0.0,
+            "overlay_entropy": 0.0,
+            "global_entropy": 0.09,
+            "max_block_entropy": 0.0,
+            "high_entropy_block_ratio": 0.0,
+            "block_count": 0,
+            "embedded_pe_detected": false,
+            "embedded_pe_count": 0,
+            "embedded_pe_offsets": [],
+            "embedded_pe_details": [],
+            "overlay_has_strings": false,
+            "overlay_string_count": 0,
+            "overlay_suspicious_strings": [],
+            "is_known_installer": false,
+            "installer_type": null,
+            "installer_spoof_suspected": false,
+            "overlay_yara_hits": [],
+            "embedded_pe_yara_hits": []
+          },
+          "timestamp": "2026-09-11T02:35:33.485933+00:00",
+          "status": "ok",
+          "error": null,
+          "reliability": "medium",
+          "reliability_weight": 0.6,
+          "evidence_group": "overlay_forensic",
+          "confidence": "Low"
+        },
+        {
+          "source": "heuristic",
+          "verdict": "benign",
+          "score": 20.0,
+          "score_raw": 20.0,
+          "score_norm": 0.2,
+          "scale": 100.0,
+          "severity": "low",
+          "operational_status": "dangerous",
+          "indicators": [
+            {
+              "name": "no_imports (posible dropper sin IAT)",
+              "value": "no_imports (posible dropper sin IAT)",
+              "weight": 0,
+              "description": ""
+            }
+          ],
+          "reasons": [
+            "no_imports (posible dropper sin IAT)"
+          ],
+          "metadata": {
+            "risk_score": 20,
+            "risk_level": "LOW",
+            "operational_status": "DANGEROUS",
+            "triggered_indicators": [
+              "no_imports (posible dropper sin IAT)"
+            ],
+            "justification": "Risk LOW (score=20). Triggered 1 indicator(s): no_imports (posible dropper sin IAT)"
+          },
+          "timestamp": "2026-09-11T02:35:33.485944+00:00",
+          "status": "ok",
+          "error": null,
+          "reliability": "medium",
+          "reliability_weight": 0.6,
+          "evidence_group": "pe_heuristic",
+          "confidence": "Low"
+        },
+        {
+          "source": "dotnet",
+          "verdict": "benign",
+          "score": 0.0,
+          "score_raw": 0.0,
+          "score_norm": 0.0,
+          "scale": "heuristic_0_100",
+          "severity": "low",
+          "operational_status": "clean",
+          "indicators": [],
+          "reasons": [
+            "not_dotnet"
+          ],
+          "metadata": {
+            "is_dotnet": false
+          },
+          "timestamp": "2026-09-11T02:35:33.485950+00:00",
+          "status": "ok",
+          "error": null,
+          "reliability": "low",
+          "reliability_weight": 0.35,
+          "evidence_group": "dotnet_meta",
+          "confidence": "Low"
+        },
+        {
+          "source": "il_behavioral",
+          "verdict": "benign",
+          "score": 0.0,
+          "score_raw": 0.0,
+          "score_norm": 0.0,
+          "scale": "heuristic_0_100",
+          "severity": "low",
+          "operational_status": "clean",
+          "indicators": [],
+          "reasons": [
+            "not_dotnet_no_il"
+          ],
+          "metadata": {
+            "is_dotnet": false
+          },
+          "timestamp": "2026-09-11T02:35:33.485956+00:00",
+          "status": "ok",
+          "error": null,
+          "reliability": "low",
+          "reliability_weight": 0.35,
+          "evidence_group": "il_semantic",
+          "confidence": "Low"
+        }
+      ],
+      "timestamp": "2026-09-11T02:35:33.486043+00:00",
+      "ml_score_raw": 0.9998,
+      "degraded": false,
+      "coverage": 1.0,
+      "contradiction": "ML malicious 1.00 contradicted by 5 benign sources"
+    },
+    "correlation": {
+      "verdict": "suspicious",
+      "risk_level": "critical",
+      "operational_status": "suspicious",
+      "reasons": [
+        "S=0.27 coverage=100%",
+        "contradiction: ML malicious 1.00 contradicted by 5 benign sources",
+        "contributors: ml_onnx,pe_static",
+        "ml_onnx: ml_score=0.9998 threshold=0.5 confidence=High",
+        "pe_static: no_imports"
+      ],
+      "contributing_sources": [
+        "ml_onnx",
+        "pe_static"
+      ],
+      "ml_score_preserved": 0.9998
+    },
+    "degraded": false,
+    "coverage": 1.0,
+    "offline": true,
+    "queued_at": "2026-09-11T02:35:34.444602+00:00"
+  },
+  {
+    "file_name": "evil_00.exe",
+    "scan_type": "single",
+    "result": "suspicious",
+    "confidence": 0.9998,
+    "scan_time": "0.39s",
+    "features_detected": [],
+    "timestamp": "2026-09-11T02:54:23.801331+00:00",
+    "explanation": null,
+    "risk_level": "high",
+    "analysis_type": "pe",
+    "user_id": "user-security-test",
+    "user_email": "sec@test.com",
+    "yara_matches": [],
+    "was_unpacked": false,
+    "detection_phases": [
+      "YARA",
+      "ML_STATIC",
+      "OVERLAY_FORENSICS",
+      "DOTNET_ANALYSIS",
+      "CORRELATION"
+    ],
+    "is_dotnet": false,
+    "clr_version": null,
+    "assembly_name": null,
+    "obfuscator_detected": false,
+    "obfuscator_name": null,
+    "embedded_assemblies_count": 0,
+    "reflection_usage": false,
+    "dynamic_loading_detected": false,
+    "dotnet_risk_score": 0,
+    "dotnet_risk_level": "LOW",
+    "dotnet_threat_score": 0,
+    "dotnet_threat_level": "LOW",
+    "injection_detected": false,
+    "persistence_detected": false,
+    "networking_detected": false,
+    "credential_theft_detected": false,
+    "worm_behavior_detected": false,
+    "rat_detected": false,
+    "stealer_detected": false,
+    "top_family": null,
+    "family_likelihoods": {},
+    "sha256": "dcb8daf9f7b51b4b6b1e63bb86347ec9bb8b08198e03c4c890b6e3ac7144f8ea",
+    "behavioral_analysis": null,
+    "operational_status": "SUSPICIOUS",
+    "evidences": [
+      {
+        "source": "ml_onnx",
+        "verdict": "malicious",
+        "score": 0.9998,
+        "score_raw": 0.9998,
+        "score_norm": 0.9998,
+        "scale": "prob_0_1",
+        "severity": "critical",
+        "operational_status": "dangerous",
+        "indicators": [],
+        "reasons": [
+          "ml_score=0.9998 threshold=0.5 confidence=High"
+        ],
+        "metadata": {
+          "confidence": "High",
+          "threshold": 0.5
+        },
+        "timestamp": "2026-09-11T02:54:23.798110+00:00",
+        "status": "ok",
+        "error": null,
+        "reliability": "medium",
+        "reliability_weight": 0.6,
+        "evidence_group": "ml_prob",
+        "confidence": "High"
+      },
+      {
+        "source": "yara",
+        "verdict": "benign",
+        "score": 0.0,
+        "score_raw": 0.0,
+        "score_norm": 0.0,
+        "scale": "deterministic",
+        "severity": "low",
+        "operational_status": "clean",
+        "indicators": [],
+        "reasons": [
+          "no yara matches"
+        ],
+        "metadata": {},
+        "timestamp": "2026-09-11T02:54:23.798140+00:00",
+        "status": "ok",
+        "error": null,
+        "reliability": "medium",
+        "reliability_weight": 0.6,
+        "evidence_group": "yara_sig",
+        "confidence": "Medium"
+      },
+      {
+        "source": "pe_static",
+        "verdict": "suspicious",
+        "score": 20.0,
+        "score_raw": 20.0,
+        "score_norm": 0.4,
+        "scale": "heuristic_0_50",
+        "severity": "medium",
+        "operational_status": "suspicious",
+        "indicators": [
+          {
+            "name": "no_imports",
+            "value": 0,
+            "weight": 20,
+            "description": ""
+          }
+        ],
+        "reasons": [
+          "no_imports"
+        ],
+        "metadata": {
+          "global_entropy": 0.09,
+          "ratio_virtual_real": 1.0,
+          "num_sections": 0,
+          "executable_sections": 0,
+          "rwx_sections": 0,
+          "anomalous_sections": 0,
+          "num_imports": 0,
+          "num_exports": 0,
+          "is_packed_upx": false,
+          "high_entropy_sections": 0,
+          "packer_detected": false,
+          "packer_reasons": []
+        },
+        "timestamp": "2026-09-11T02:54:23.798156+00:00",
+        "status": "ok",
+        "error": null,
+        "reliability": "medium",
+        "reliability_weight": 0.6,
+        "evidence_group": "pe_heuristic",
+        "confidence": "Medium"
+      },
+      {
+        "source": "overlay",
+        "verdict": "benign",
+        "score": 0.0,
+        "score_raw": 0.0,
+        "score_norm": 0.0,
+        "scale": 60.0,
+        "severity": "low",
+        "operational_status": "clean",
+        "indicators": [],
+        "reasons": [
+          "no overlay signals"
+        ],
+        "metadata": {
+          "overlay_present": false,
+          "overlay_offset": 0,
+          "overlay_size": 0,
+          "overlay_ratio": 0.0,
+          "overlay_entropy": 0.0,
+          "global_entropy": 0.09,
+          "max_block_entropy": 0.0,
+          "high_entropy_block_ratio": 0.0,
+          "block_count": 0,
+          "embedded_pe_detected": false,
+          "embedded_pe_count": 0,
+          "embedded_pe_offsets": [],
+          "embedded_pe_details": [],
+          "overlay_has_strings": false,
+          "overlay_string_count": 0,
+          "overlay_suspicious_strings": [],
+          "is_known_installer": false,
+          "installer_type": null,
+          "installer_spoof_suspected": false,
+          "overlay_yara_hits": [],
+          "embedded_pe_yara_hits": []
+        },
+        "timestamp": "2026-09-11T02:54:23.798167+00:00",
+        "status": "ok",
+        "error": null,
+        "reliability": "medium",
+        "reliability_weight": 0.6,
+        "evidence_group": "overlay_forensic",
+        "confidence": "Low"
+      },
+      {
+        "source": "heuristic",
+        "verdict": "benign",
+        "score": 20.0,
+        "score_raw": 20.0,
+        "score_norm": 0.2,
+        "scale": 100.0,
+        "severity": "low",
+        "operational_status": "dangerous",
+        "indicators": [
+          {
+            "name": "no_imports (posible dropper sin IAT)",
+            "value": "no_imports (posible dropper sin IAT)",
+            "weight": 0,
+            "description": ""
+          }
+        ],
+        "reasons": [
+          "no_imports (posible dropper sin IAT)"
+        ],
+        "metadata": {
+          "risk_score": 20,
+          "risk_level": "LOW",
+          "operational_status": "DANGEROUS",
+          "triggered_indicators": [
+            "no_imports (posible dropper sin IAT)"
+          ],
+          "justification": "Risk LOW (score=20). Triggered 1 indicator(s): no_imports (posible dropper sin IAT)"
+        },
+        "timestamp": "2026-09-11T02:54:23.798178+00:00",
+        "status": "ok",
+        "error": null,
+        "reliability": "medium",
+        "reliability_weight": 0.6,
+        "evidence_group": "pe_heuristic",
+        "confidence": "Low"
+      },
+      {
+        "source": "dotnet",
+        "verdict": "benign",
+        "score": 0.0,
+        "score_raw": 0.0,
+        "score_norm": 0.0,
+        "scale": "heuristic_0_100",
+        "severity": "low",
+        "operational_status": "clean",
+        "indicators": [],
+        "reasons": [
+          "not_dotnet"
+        ],
+        "metadata": {
+          "is_dotnet": false
+        },
+        "timestamp": "2026-09-11T02:54:23.798184+00:00",
+        "status": "ok",
+        "error": null,
+        "reliability": "low",
+        "reliability_weight": 0.35,
+        "evidence_group": "dotnet_meta",
+        "confidence": "Low"
+      },
+      {
+        "source": "il_behavioral",
+        "verdict": "benign",
+        "score": 0.0,
+        "score_raw": 0.0,
+        "score_norm": 0.0,
+        "scale": "heuristic_0_100",
+        "severity": "low",
+        "operational_status": "clean",
+        "indicators": [],
+        "reasons": [
+          "not_dotnet_no_il"
+        ],
+        "metadata": {
+          "is_dotnet": false
+        },
+        "timestamp": "2026-09-11T02:54:23.798189+00:00",
+        "status": "ok",
+        "error": null,
+        "reliability": "low",
+        "reliability_weight": 0.35,
+        "evidence_group": "il_semantic",
+        "confidence": "Low"
+      }
+    ],
+    "final_verdict": {
+      "verdict": "suspicious",
+      "risk_level": "critical",
+      "operational_status": "suspicious",
+      "score": 0.2709290322580645,
+      "confidence": "High",
+      "reasons": [
+        "S=0.27 coverage=100%",
+        "contradiction: ML malicious 1.00 contradicted by 5 benign sources",
+        "contributors: ml_onnx,pe_static",
+        "ml_onnx: ml_score=0.9998 threshold=0.5 confidence=High",
+        "pe_static: no_imports"
+      ],
+      "contributing_sources": [
+        "ml_onnx",
+        "pe_static"
+      ],
+      "evidences": [
+        {
+          "source": "ml_onnx",
+          "verdict": "malicious",
+          "score": 0.9998,
+          "score_raw": 0.9998,
+          "score_norm": 0.9998,
+          "scale": "prob_0_1",
+          "severity": "critical",
+          "operational_status": "dangerous",
+          "indicators": [],
+          "reasons": [
+            "ml_score=0.9998 threshold=0.5 confidence=High"
+          ],
+          "metadata": {
+            "confidence": "High",
+            "threshold": 0.5
+          },
+          "timestamp": "2026-09-11T02:54:23.798110+00:00",
+          "status": "ok",
+          "error": null,
+          "reliability": "medium",
+          "reliability_weight": 0.6,
+          "evidence_group": "ml_prob",
+          "confidence": "High"
+        },
+        {
+          "source": "yara",
+          "verdict": "benign",
+          "score": 0.0,
+          "score_raw": 0.0,
+          "score_norm": 0.0,
+          "scale": "deterministic",
+          "severity": "low",
+          "operational_status": "clean",
+          "indicators": [],
+          "reasons": [
+            "no yara matches"
+          ],
+          "metadata": {},
+          "timestamp": "2026-09-11T02:54:23.798140+00:00",
+          "status": "ok",
+          "error": null,
+          "reliability": "medium",
+          "reliability_weight": 0.6,
+          "evidence_group": "yara_sig",
+          "confidence": "Medium"
+        },
+        {
+          "source": "pe_static",
+          "verdict": "suspicious",
+          "score": 20.0,
+          "score_raw": 20.0,
+          "score_norm": 0.4,
+          "scale": "heuristic_0_50",
+          "severity": "medium",
+          "operational_status": "suspicious",
+          "indicators": [
+            {
+              "name": "no_imports",
+              "value": 0,
+              "weight": 20,
+              "description": ""
+            }
+          ],
+          "reasons": [
+            "no_imports"
+          ],
+          "metadata": {
+            "global_entropy": 0.09,
+            "ratio_virtual_real": 1.0,
+            "num_sections": 0,
+            "executable_sections": 0,
+            "rwx_sections": 0,
+            "anomalous_sections": 0,
+            "num_imports": 0,
+            "num_exports": 0,
+            "is_packed_upx": false,
+            "high_entropy_sections": 0,
+            "packer_detected": false,
+            "packer_reasons": []
+          },
+          "timestamp": "2026-09-11T02:54:23.798156+00:00",
+          "status": "ok",
+          "error": null,
+          "reliability": "medium",
+          "reliability_weight": 0.6,
+          "evidence_group": "pe_heuristic",
+          "confidence": "Medium"
+        },
+        {
+          "source": "overlay",
+          "verdict": "benign",
+          "score": 0.0,
+          "score_raw": 0.0,
+          "score_norm": 0.0,
+          "scale": 60.0,
+          "severity": "low",
+          "operational_status": "clean",
+          "indicators": [],
+          "reasons": [
+            "no overlay signals"
+          ],
+          "metadata": {
+            "overlay_present": false,
+            "overlay_offset": 0,
+            "overlay_size": 0,
+            "overlay_ratio": 0.0,
+            "overlay_entropy": 0.0,
+            "global_entropy": 0.09,
+            "max_block_entropy": 0.0,
+            "high_entropy_block_ratio": 0.0,
+            "block_count": 0,
+            "embedded_pe_detected": false,
+            "embedded_pe_count": 0,
+            "embedded_pe_offsets": [],
+            "embedded_pe_details": [],
+            "overlay_has_strings": false,
+            "overlay_string_count": 0,
+            "overlay_suspicious_strings": [],
+            "is_known_installer": false,
+            "installer_type": null,
+            "installer_spoof_suspected": false,
+            "overlay_yara_hits": [],
+            "embedded_pe_yara_hits": []
+          },
+          "timestamp": "2026-09-11T02:54:23.798167+00:00",
+          "status": "ok",
+          "error": null,
+          "reliability": "medium",
+          "reliability_weight": 0.6,
+          "evidence_group": "overlay_forensic",
+          "confidence": "Low"
+        },
+        {
+          "source": "heuristic",
+          "verdict": "benign",
+          "score": 20.0,
+          "score_raw": 20.0,
+          "score_norm": 0.2,
+          "scale": 100.0,
+          "severity": "low",
+          "operational_status": "dangerous",
+          "indicators": [
+            {
+              "name": "no_imports (posible dropper sin IAT)",
+              "value": "no_imports (posible dropper sin IAT)",
+              "weight": 0,
+              "description": ""
+            }
+          ],
+          "reasons": [
+            "no_imports (posible dropper sin IAT)"
+          ],
+          "metadata": {
+            "risk_score": 20,
+            "risk_level": "LOW",
+            "operational_status": "DANGEROUS",
+            "triggered_indicators": [
+              "no_imports (posible dropper sin IAT)"
+            ],
+            "justification": "Risk LOW (score=20). Triggered 1 indicator(s): no_imports (posible dropper sin IAT)"
+          },
+          "timestamp": "2026-09-11T02:54:23.798178+00:00",
+          "status": "ok",
+          "error": null,
+          "reliability": "medium",
+          "reliability_weight": 0.6,
+          "evidence_group": "pe_heuristic",
+          "confidence": "Low"
+        },
+        {
+          "source": "dotnet",
+          "verdict": "benign",
+          "score": 0.0,
+          "score_raw": 0.0,
+          "score_norm": 0.0,
+          "scale": "heuristic_0_100",
+          "severity": "low",
+          "operational_status": "clean",
+          "indicators": [],
+          "reasons": [
+            "not_dotnet"
+          ],
+          "metadata": {
+            "is_dotnet": false
+          },
+          "timestamp": "2026-09-11T02:54:23.798184+00:00",
+          "status": "ok",
+          "error": null,
+          "reliability": "low",
+          "reliability_weight": 0.35,
+          "evidence_group": "dotnet_meta",
+          "confidence": "Low"
+        },
+        {
+          "source": "il_behavioral",
+          "verdict": "benign",
+          "score": 0.0,
+          "score_raw": 0.0,
+          "score_norm": 0.0,
+          "scale": "heuristic_0_100",
+          "severity": "low",
+          "operational_status": "clean",
+          "indicators": [],
+          "reasons": [
+            "not_dotnet_no_il"
+          ],
+          "metadata": {
+            "is_dotnet": false
+          },
+          "timestamp": "2026-09-11T02:54:23.798189+00:00",
+          "status": "ok",
+          "error": null,
+          "reliability": "low",
+          "reliability_weight": 0.35,
+          "evidence_group": "il_semantic",
+          "confidence": "Low"
+        }
+      ],
+      "timestamp": "2026-09-11T02:54:23.798277+00:00",
+      "ml_score_raw": 0.9998,
+      "degraded": false,
+      "coverage": 1.0,
+      "contradiction": "ML malicious 1.00 contradicted by 5 benign sources"
+    },
+    "correlation": {
+      "verdict": "suspicious",
+      "risk_level": "critical",
+      "operational_status": "suspicious",
+      "reasons": [
+        "S=0.27 coverage=100%",
+        "contradiction: ML malicious 1.00 contradicted by 5 benign sources",
+        "contributors: ml_onnx,pe_static",
+        "ml_onnx: ml_score=0.9998 threshold=0.5 confidence=High",
+        "pe_static: no_imports"
+      ],
+      "contributing_sources": [
+        "ml_onnx",
+        "pe_static"
+      ],
+      "ml_score_preserved": 0.9998
+    },
+    "degraded": false,
+    "coverage": 1.0,
+    "offline": true,
+    "queued_at": "2026-09-11T02:54:25.173095+00:00"
+  },
+  {
+    "file_name": "evil_00.exe",
+    "scan_type": "single",
+    "result": "suspicious",
+    "confidence": 0.9998,
+    "scan_time": "0.46s",
+    "features_detected": [],
+    "timestamp": "2026-09-11T03:08:22.762992+00:00",
+    "explanation": null,
+    "risk_level": "high",
+    "analysis_type": "pe",
+    "user_id": "user-security-test",
+    "user_email": "sec@test.com",
+    "yara_matches": [],
+    "was_unpacked": false,
+    "detection_phases": [
+      "YARA",
+      "ML_STATIC",
+      "OVERLAY_FORENSICS",
+      "DOTNET_ANALYSIS",
+      "CORRELATION"
+    ],
+    "is_dotnet": false,
+    "clr_version": null,
+    "assembly_name": null,
+    "obfuscator_detected": false,
+    "obfuscator_name": null,
+    "embedded_assemblies_count": 0,
+    "reflection_usage": false,
+    "dynamic_loading_detected": false,
+    "dotnet_risk_score": 0,
+    "dotnet_risk_level": "LOW",
+    "dotnet_threat_score": 0,
+    "dotnet_threat_level": "LOW",
+    "injection_detected": false,
+    "persistence_detected": false,
+    "networking_detected": false,
+    "credential_theft_detected": false,
+    "worm_behavior_detected": false,
+    "rat_detected": false,
+    "stealer_detected": false,
+    "top_family": null,
+    "family_likelihoods": {},
+    "sha256": "dcb8daf9f7b51b4b6b1e63bb86347ec9bb8b08198e03c4c890b6e3ac7144f8ea",
+    "behavioral_analysis": null,
+    "operational_status": "SUSPICIOUS",
+    "evidences": [
+      {
+        "source": "ml_onnx",
+        "verdict": "malicious",
+        "score": 0.9998,
+        "score_raw": 0.9998,
+        "score_norm": 0.9998,
+        "scale": "prob_0_1",
+        "severity": "critical",
+        "operational_status": "dangerous",
+        "indicators": [],
+        "reasons": [
+          "ml_score=0.9998 threshold=0.5 confidence=High"
+        ],
+        "metadata": {
+          "confidence": "High",
+          "threshold": 0.5
+        },
+        "timestamp": "2026-09-11T03:08:22.759147+00:00",
+        "status": "ok",
+        "error": null,
+        "reliability": "medium",
+        "reliability_weight": 0.6,
+        "evidence_group": "ml_prob",
+        "confidence": "High"
+      },
+      {
+        "source": "yara",
+        "verdict": "benign",
+        "score": 0.0,
+        "score_raw": 0.0,
+        "score_norm": 0.0,
+        "scale": "deterministic",
+        "severity": "low",
+        "operational_status": "clean",
+        "indicators": [],
+        "reasons": [
+          "no yara matches"
+        ],
+        "metadata": {},
+        "timestamp": "2026-09-11T03:08:22.759180+00:00",
+        "status": "ok",
+        "error": null,
+        "reliability": "medium",
+        "reliability_weight": 0.6,
+        "evidence_group": "yara_sig",
+        "confidence": "Medium"
+      },
+      {
+        "source": "pe_static",
+        "verdict": "suspicious",
+        "score": 20.0,
+        "score_raw": 20.0,
+        "score_norm": 0.4,
+        "scale": "heuristic_0_50",
+        "severity": "medium",
+        "operational_status": "suspicious",
+        "indicators": [
+          {
+            "name": "no_imports",
+            "value": 0,
+            "weight": 20,
+            "description": ""
+          }
+        ],
+        "reasons": [
+          "no_imports"
+        ],
+        "metadata": {
+          "global_entropy": 0.09,
+          "ratio_virtual_real": 1.0,
+          "num_sections": 0,
+          "executable_sections": 0,
+          "rwx_sections": 0,
+          "anomalous_sections": 0,
+          "num_imports": 0,
+          "num_exports": 0,
+          "is_packed_upx": false,
+          "high_entropy_sections": 0,
+          "packer_detected": false,
+          "packer_reasons": []
+        },
+        "timestamp": "2026-09-11T03:08:22.759197+00:00",
+        "status": "ok",
+        "error": null,
+        "reliability": "medium",
+        "reliability_weight": 0.6,
+        "evidence_group": "pe_heuristic",
+        "confidence": "Medium"
+      },
+      {
+        "source": "overlay",
+        "verdict": "benign",
+        "score": 0.0,
+        "score_raw": 0.0,
+        "score_norm": 0.0,
+        "scale": 60.0,
+        "severity": "low",
+        "operational_status": "clean",
+        "indicators": [],
+        "reasons": [
+          "no overlay signals"
+        ],
+        "metadata": {
+          "overlay_present": false,
+          "overlay_offset": 0,
+          "overlay_size": 0,
+          "overlay_ratio": 0.0,
+          "overlay_entropy": 0.0,
+          "global_entropy": 0.09,
+          "max_block_entropy": 0.0,
+          "high_entropy_block_ratio": 0.0,
+          "block_count": 0,
+          "embedded_pe_detected": false,
+          "embedded_pe_count": 0,
+          "embedded_pe_offsets": [],
+          "embedded_pe_details": [],
+          "overlay_has_strings": false,
+          "overlay_string_count": 0,
+          "overlay_suspicious_strings": [],
+          "is_known_installer": false,
+          "installer_type": null,
+          "installer_spoof_suspected": false,
+          "overlay_yara_hits": [],
+          "embedded_pe_yara_hits": []
+        },
+        "timestamp": "2026-09-11T03:08:22.759208+00:00",
+        "status": "ok",
+        "error": null,
+        "reliability": "medium",
+        "reliability_weight": 0.6,
+        "evidence_group": "overlay_forensic",
+        "confidence": "Low"
+      },
+      {
+        "source": "heuristic",
+        "verdict": "benign",
+        "score": 20.0,
+        "score_raw": 20.0,
+        "score_norm": 0.2,
+        "scale": 100.0,
+        "severity": "low",
+        "operational_status": "dangerous",
+        "indicators": [
+          {
+            "name": "no_imports (posible dropper sin IAT)",
+            "value": "no_imports (posible dropper sin IAT)",
+            "weight": 0,
+            "description": ""
+          }
+        ],
+        "reasons": [
+          "no_imports (posible dropper sin IAT)"
+        ],
+        "metadata": {
+          "risk_score": 20,
+          "risk_level": "LOW",
+          "operational_status": "DANGEROUS",
+          "triggered_indicators": [
+            "no_imports (posible dropper sin IAT)"
+          ],
+          "justification": "Risk LOW (score=20). Triggered 1 indicator(s): no_imports (posible dropper sin IAT)"
+        },
+        "timestamp": "2026-09-11T03:08:22.759219+00:00",
+        "status": "ok",
+        "error": null,
+        "reliability": "medium",
+        "reliability_weight": 0.6,
+        "evidence_group": "pe_heuristic",
+        "confidence": "Low"
+      },
+      {
+        "source": "dotnet",
+        "verdict": "benign",
+        "score": 0.0,
+        "score_raw": 0.0,
+        "score_norm": 0.0,
+        "scale": "heuristic_0_100",
+        "severity": "low",
+        "operational_status": "clean",
+        "indicators": [],
+        "reasons": [
+          "not_dotnet"
+        ],
+        "metadata": {
+          "is_dotnet": false
+        },
+        "timestamp": "2026-09-11T03:08:22.759224+00:00",
+        "status": "ok",
+        "error": null,
+        "reliability": "low",
+        "reliability_weight": 0.35,
+        "evidence_group": "dotnet_meta",
+        "confidence": "Low"
+      },
+      {
+        "source": "il_behavioral",
+        "verdict": "benign",
+        "score": 0.0,
+        "score_raw": 0.0,
+        "score_norm": 0.0,
+        "scale": "heuristic_0_100",
+        "severity": "low",
+        "operational_status": "clean",
+        "indicators": [],
+        "reasons": [
+          "not_dotnet_no_il"
+        ],
+        "metadata": {
+          "is_dotnet": false
+        },
+        "timestamp": "2026-09-11T03:08:22.759229+00:00",
+        "status": "ok",
+        "error": null,
+        "reliability": "low",
+        "reliability_weight": 0.35,
+        "evidence_group": "il_semantic",
+        "confidence": "Low"
+      }
+    ],
+    "final_verdict": {
+      "verdict": "suspicious",
+      "risk_level": "critical",
+      "operational_status": "suspicious",
+      "score": 0.2709290322580645,
+      "confidence": "High",
+      "reasons": [
+        "S=0.27 coverage=100%",
+        "contradiction: ML malicious 1.00 contradicted by 5 benign sources",
+        "contributors: ml_onnx,pe_static",
+        "ml_onnx: ml_score=0.9998 threshold=0.5 confidence=High",
+        "pe_static: no_imports"
+      ],
+      "contributing_sources": [
+        "ml_onnx",
+        "pe_static"
+      ],
+      "evidences": [
+        {
+          "source": "ml_onnx",
+          "verdict": "malicious",
+          "score": 0.9998,
+          "score_raw": 0.9998,
+          "score_norm": 0.9998,
+          "scale": "prob_0_1",
+          "severity": "critical",
+          "operational_status": "dangerous",
+          "indicators": [],
+          "reasons": [
+            "ml_score=0.9998 threshold=0.5 confidence=High"
+          ],
+          "metadata": {
+            "confidence": "High",
+            "threshold": 0.5
+          },
+          "timestamp": "2026-09-11T03:08:22.759147+00:00",
+          "status": "ok",
+          "error": null,
+          "reliability": "medium",
+          "reliability_weight": 0.6,
+          "evidence_group": "ml_prob",
+          "confidence": "High"
+        },
+        {
+          "source": "yara",
+          "verdict": "benign",
+          "score": 0.0,
+          "score_raw": 0.0,
+          "score_norm": 0.0,
+          "scale": "deterministic",
+          "severity": "low",
+          "operational_status": "clean",
+          "indicators": [],
+          "reasons": [
+            "no yara matches"
+          ],
+          "metadata": {},
+          "timestamp": "2026-09-11T03:08:22.759180+00:00",
+          "status": "ok",
+          "error": null,
+          "reliability": "medium",
+          "reliability_weight": 0.6,
+          "evidence_group": "yara_sig",
+          "confidence": "Medium"
+        },
+        {
+          "source": "pe_static",
+          "verdict": "suspicious",
+          "score": 20.0,
+          "score_raw": 20.0,
+          "score_norm": 0.4,
+          "scale": "heuristic_0_50",
+          "severity": "medium",
+          "operational_status": "suspicious",
+          "indicators": [
+            {
+              "name": "no_imports",
+              "value": 0,
+              "weight": 20,
+              "description": ""
+            }
+          ],
+          "reasons": [
+            "no_imports"
+          ],
+          "metadata": {
+            "global_entropy": 0.09,
+            "ratio_virtual_real": 1.0,
+            "num_sections": 0,
+            "executable_sections": 0,
+            "rwx_sections": 0,
+            "anomalous_sections": 0,
+            "num_imports": 0,
+            "num_exports": 0,
+            "is_packed_upx": false,
+            "high_entropy_sections": 0,
+            "packer_detected": false,
+            "packer_reasons": []
+          },
+          "timestamp": "2026-09-11T03:08:22.759197+00:00",
+          "status": "ok",
+          "error": null,
+          "reliability": "medium",
+          "reliability_weight": 0.6,
+          "evidence_group": "pe_heuristic",
+          "confidence": "Medium"
+        },
+        {
+          "source": "overlay",
+          "verdict": "benign",
+          "score": 0.0,
+          "score_raw": 0.0,
+          "score_norm": 0.0,
+          "scale": 60.0,
+          "severity": "low",
+          "operational_status": "clean",
+          "indicators": [],
+          "reasons": [
+            "no overlay signals"
+          ],
+          "metadata": {
+            "overlay_present": false,
+            "overlay_offset": 0,
+            "overlay_size": 0,
+            "overlay_ratio": 0.0,
+            "overlay_entropy": 0.0,
+            "global_entropy": 0.09,
+            "max_block_entropy": 0.0,
+            "high_entropy_block_ratio": 0.0,
+            "block_count": 0,
+            "embedded_pe_detected": false,
+            "embedded_pe_count": 0,
+            "embedded_pe_offsets": [],
+            "embedded_pe_details": [],
+            "overlay_has_strings": false,
+            "overlay_string_count": 0,
+            "overlay_suspicious_strings": [],
+            "is_known_installer": false,
+            "installer_type": null,
+            "installer_spoof_suspected": false,
+            "overlay_yara_hits": [],
+            "embedded_pe_yara_hits": []
+          },
+          "timestamp": "2026-09-11T03:08:22.759208+00:00",
+          "status": "ok",
+          "error": null,
+          "reliability": "medium",
+          "reliability_weight": 0.6,
+          "evidence_group": "overlay_forensic",
+          "confidence": "Low"
+        },
+        {
+          "source": "heuristic",
+          "verdict": "benign",
+          "score": 20.0,
+          "score_raw": 20.0,
+          "score_norm": 0.2,
+          "scale": 100.0,
+          "severity": "low",
+          "operational_status": "dangerous",
+          "indicators": [
+            {
+              "name": "no_imports (posible dropper sin IAT)",
+              "value": "no_imports (posible dropper sin IAT)",
+              "weight": 0,
+              "description": ""
+            }
+          ],
+          "reasons": [
+            "no_imports (posible dropper sin IAT)"
+          ],
+          "metadata": {
+            "risk_score": 20,
+            "risk_level": "LOW",
+            "operational_status": "DANGEROUS",
+            "triggered_indicators": [
+              "no_imports (posible dropper sin IAT)"
+            ],
+            "justification": "Risk LOW (score=20). Triggered 1 indicator(s): no_imports (posible dropper sin IAT)"
+          },
+          "timestamp": "2026-09-11T03:08:22.759219+00:00",
+          "status": "ok",
+          "error": null,
+          "reliability": "medium",
+          "reliability_weight": 0.6,
+          "evidence_group": "pe_heuristic",
+          "confidence": "Low"
+        },
+        {
+          "source": "dotnet",
+          "verdict": "benign",
+          "score": 0.0,
+          "score_raw": 0.0,
+          "score_norm": 0.0,
+          "scale": "heuristic_0_100",
+          "severity": "low",
+          "operational_status": "clean",
+          "indicators": [],
+          "reasons": [
+            "not_dotnet"
+          ],
+          "metadata": {
+            "is_dotnet": false
+          },
+          "timestamp": "2026-09-11T03:08:22.759224+00:00",
+          "status": "ok",
+          "error": null,
+          "reliability": "low",
+          "reliability_weight": 0.35,
+          "evidence_group": "dotnet_meta",
+          "confidence": "Low"
+        },
+        {
+          "source": "il_behavioral",
+          "verdict": "benign",
+          "score": 0.0,
+          "score_raw": 0.0,
+          "score_norm": 0.0,
+          "scale": "heuristic_0_100",
+          "severity": "low",
+          "operational_status": "clean",
+          "indicators": [],
+          "reasons": [
+            "not_dotnet_no_il"
+          ],
+          "metadata": {
+            "is_dotnet": false
+          },
+          "timestamp": "2026-09-11T03:08:22.759229+00:00",
+          "status": "ok",
+          "error": null,
+          "reliability": "low",
+          "reliability_weight": 0.35,
+          "evidence_group": "il_semantic",
+          "confidence": "Low"
+        }
+      ],
+      "timestamp": "2026-09-11T03:08:22.759316+00:00",
+      "ml_score_raw": 0.9998,
+      "degraded": false,
+      "coverage": 1.0,
+      "contradiction": "ML malicious 1.00 contradicted by 5 benign sources"
+    },
+    "correlation": {
+      "verdict": "suspicious",
+      "risk_level": "critical",
+      "operational_status": "suspicious",
+      "reasons": [
+        "S=0.27 coverage=100%",
+        "contradiction: ML malicious 1.00 contradicted by 5 benign sources",
+        "contributors: ml_onnx,pe_static",
+        "ml_onnx: ml_score=0.9998 threshold=0.5 confidence=High",
+        "pe_static: no_imports"
+      ],
+      "contributing_sources": [
+        "ml_onnx",
+        "pe_static"
+      ],
+      "ml_score_preserved": 0.9998
+    },
+    "degraded": false,
+    "coverage": 1.0,
+    "offline": true,
+    "queued_at": "2026-09-11T03:08:23.721317+00:00"
   }
 ]

@@ -13,7 +13,7 @@
 ![Dataset](https://img.shields.io/badge/Dataset-SOREL--20M-orange?style=for-the-badge)
 ![Modelo](https://img.shields.io/badge/Modelo-Deep_Learning_ONNX-red?style=for-the-badge&logo=pytorch&logoColor=white)
 ![Plataforma](https://img.shields.io/badge/Plataforma-Linux_%2F_Windows-lightgrey?style=for-the-badge&logo=linux&logoColor=white)
-![AUC-ROC](https://img.shields.io/badge/AUC--ROC-0.985-brightgreen?style=for-the-badge)
+![AUC-ROC](https://img.shields.io/badge/AUC--ROC-0.996-brightgreen?style=for-the-badge)
 
 </div>
 
@@ -56,7 +56,7 @@
 
 ## 1. Introducción
 
-**ShadowNet Defender (SND)** es un sistema de ciberseguridad orientado a la **detección estática de malware** en ejecutables Windows (PE — *Portable Executable*). Cada binario se transforma en un vector matemático de **2 381 dimensiones**, se normaliza estadísticamente y se clasifica con una **red neuronal profunda (DNN)** exportada a ONNX.
+**ShadowNet Defender (SND)** es un sistema de ciberseguridad orientado a la **detección estática de malware** en ejecutables Windows (PE — *Portable Executable*). Cada binario se transforma en un vector EMBER de **2 381 dimensiones**, se deriva un bloque OVERLAY de **6 señales** (total **2 387**), cada bloque se normaliza con su propio scaler y el vector resultante se clasifica con un **MLP (`2387 → 512 → 256 → 128 → 1`)** exportado a ONNX.
 
 De forma complementaria, un **pipeline heurístico multicapa** inspecciona overlays, secciones empaquetadas, firmas YARA y comportamientos .NET, y correlaciona todas las señales en un veredicto único. La explicabilidad se genera con **modelos de lenguaje en la nube (Groq / Gemini)** mediante una cascada resiliente con fallback offline.
 
@@ -84,8 +84,8 @@ Suite completa de ciberseguridad compuesta por:
 
 **Objetivos específicos alcanzados:**
 
-- Extractor de 2 381 dimensiones compatible con EMBER 2.0.
-- Entrenamiento del modelo sobre dataset masivo (SOREL-20M + colección in-the-wild).
+- Extractor de 2 381 dimensiones compatible con EMBER 2.0 (entrada del modelo: 2 387 con OVERLAY_6).
+- Entrenamiento del modelo v5 sobre 7M muestras SOREL-20M (seed 42, split temporal 6.3M/0.7M, 2 épocas).
 - Pipeline híbrido resistente a empaquetado y evasión.
 - Explicaciones generativas en la nube con cascada resiliente (sin dependencia local obligatoria).
 - Autenticación y sincronización con Supabase (offline-first).
@@ -106,7 +106,7 @@ ShadowNet Defender aplica **ML sobre análisis estático** y **heurística avanz
 
 | Característica | Descripción |
 |----------------|-------------|
-| **Vector ML 2 381 dims** | Histogramas de bytes, entropía, strings/IoCs, metadatos generales, cabeceras, hashing de imports/exports. |
+| **Vector ML 2 387 dims** | 2 381 EMBER (histogramas de bytes, entropía, strings/IoCs, metadatos generales, cabeceras, hashing de imports/exports, data directories) + 6 OVERLAY (slack, tamaño, imports, certificado, patrón stub). |
 | **Motor híbrido multicapa** | Reglas YARA + desempaquetado UPX + forense de overlays + análisis DotNet/IL. |
 | **Motor de riesgo correlacionado** | Agrega evidencias por grupo y eleva el estado a `SUSPICIOUS` / `DANGEROUS` / `CRITICAL` sin depender ciegamente del ML. |
 | **Inferencia CPU ligera** | Exportación ONNX + normalización Z-Score (inferencia pura < 50 ms). |
@@ -127,9 +127,9 @@ flowchart TD
   C --> D[YARA — firmas deterministas]
   C --> E[UPX — desempaquetado]
   C --> F[ML Extractor]
-  F --> F1[Vector 2381 dims]
-  F1 --> F2[Scaler Z-Score]
-  F2 --> F3[Modelo ONNX]
+  F --> F1[Vector 2387 dims: 2381 EMBER + 6 overlay]
+  F1 --> F2[Scalers Z-Score: EMBER + OVERLAY]
+  F2 --> F3[Modelo ONNX 2387→1]
   C --> G[Overlay Forensics]
   C --> H[DotNet Analysis]
   C --> I[IL Behavioral]
@@ -159,7 +159,7 @@ Durante el desarrollo se implementaron:
 | 1 | **Recepción** | El binario PE llega vía API / CLI / subida. |
 | 2 | **Determinismo** | YARA produce evidencia determinista (`UNAVAILABLE` no es `BENIGN`). |
 | 3 | **Desempaquetado** | UPX si el binario está compactado. |
-| 4 | **Machine Learning** | `PEFeatureExtractor` → vector 2 381 → scaler → ONNX → evidencia ML con `score_raw` preservado. |
+| 4 | **Machine Learning** | `PEFeatureExtractor` → vector 2 381 → OVERLAY_6 → vector 2 387 → scalers → ONNX → evidencia ML con `score_raw` preservado. |
 | 5 | **Capas forenses** | Overlay / DotNet / IL emiten evidencias independientes. |
 | 6 | **Correlación** | El Correlation Engine agrega por grupo, aplica umbrales y vetos, y produce `FinalVerdict` con cobertura y contradicción explícitas. |
 | 7 | **Explicabilidad** | SHAP o LLM en la nube **solo explica**, nunca decide. |
@@ -175,7 +175,7 @@ Durante el desarrollo se implementaron:
 | `extractors/` | Ingeniería de características por bloques (bytes, entropía, imports, exports, cabeceras, strings). |
 | `backend/app/` | API FastAPI. |
 | `frontend/` + `ui/` | Interfaz de escritorio (Electron / React). |
-| `models/` | `best_model.onnx` + `scaler.pkl` + `model_manifest.json`. |
+| `models/` | `shadow_net_sorel_7m_v1.1.onnx` + `scaler_ember_v1.1.pkl` + `scaler_overlay_v1.1.pkl` + `model_manifest.json` (modelo anterior respaldado en `models/legacy_2381/`). |
 | `security/` | Reglas YARA y cuarentena. |
 | `tests/` | Suite unitaria, integración y propiedades (Hypothesis). |
 | `docs/` | Documentación por dominio — ver [índice de docs](docs/README.md). |
@@ -399,10 +399,11 @@ Enfoque: **detección estadística probabilística** con Deep Learning en lugar 
 
 | Aspecto | Detalle |
 |---------|---------|
-| **Arquitectura** | MLP `2381 → 512 → 256 → 128 → 1` con Dropout + BatchNorm. |
-| **Inferencia** | Exportado `*.pth → *.onnx` (`onnxruntime`, desacoplado de PyTorch). |
-| **Dataset** | SOREL-20M (Sophos-ReversingLabs) + colección in-the-wild — ver [`docs/academico/03_modelo_sorel20m.md`](docs/academico/03_modelo_sorel20m.md). |
-| **Normalización** | `StandardScaler` (Z-Score) serializado en `scaler.pkl`. |
+| **Arquitectura** | MLP `2387 → 512 → 256 → 128 → 1` con Dropout (0.3/0.2/0.1) + BatchNorm + ReLU (1 388 801 parámetros). |
+| **Inferencia** | Exportado `*.pth → *.onnx` con sigmoid incluido (`onnxruntime`, desacoplado de PyTorch); entrada `[batch, 2387]`, salida `[batch, 1]` en `[0, 1]`. |
+| **Dataset** | SOREL-20M, selección 7M (seed 42; 4 187 321 malware / 2 812 679 benignos), split temporal 6.3M train / 0.7M val — ver [`docs/academico/03_modelo_sorel20m.md`](docs/academico/03_modelo_sorel20m.md). |
+| **Entrenamiento** | 2 épocas, Adam lr=1e-3, `BCEWithLogitsLoss`, batch 8192, threshold 0.5 (Tesla P100, torch 2.4.1+cu121). |
+| **Normalización** | Dos `StandardScaler` (Z-Score): `scaler_ember_v1.1.pkl` (2 381) + `scaler_overlay_v1.1.pkl` (6). |
 
 Durante el desarrollo se entrenaron y versionaron scalers y modelos sobre SOREL-20M con validación de acceso por rangos y auditoría de hashes — los detalles de cada iteración viven en [`docs/arquitectura/ARQUITECTURA_DEEP_LEARNING.md`](docs/arquitectura/ARQUITECTURA_DEEP_LEARNING.md) y [`Model_Collab/`](Model_Collab/).
 
@@ -415,7 +416,7 @@ El motor agrega señales ortogonales en lugar de confiar en un único veredicto:
 | Capa | Señal | Rol |
 |------|-------|-----|
 | **YARA** | Firmas deterministas | Veto `high/critical → MALICIOUS` |
-| **ML estático** | Vector 2 381 + ONNX | `score_raw` preservado, `score_norm 0–1` |
+| **ML estático** | Vector 2 387 (2 381 EMBER + 6 overlay) + ONNX | `score_raw` preservado, `score_norm 0–1` |
 | **Overlay** | Forense de datos al final del PE | Evidencia independiente |
 | **DotNet** | Ofuscación / reflexión | Contexto .NET |
 | **IL** | `MemberRef` y semántica | Alta confiabilidad, vetos tempranos |
@@ -428,7 +429,7 @@ Durante el desarrollo se consolidó un **contrato de evidencias** y un **motor d
 
 ## 20. Procesamiento y Extracción de Características
 
-Vector tabular **2 381 dims** (hand-crafted, alineado a EMBER 2.0):
+Vector tabular **2 381 dims** (hand-crafted, alineado a EMBER 2.0) más bloque OVERLAY_6 (**entrada del modelo: 2 387**):
 
 | Rango | Contenido |
 |-------|-----------|
@@ -436,10 +437,12 @@ Vector tabular **2 381 dims** (hand-crafted, alineado a EMBER 2.0):
 | `256–511` | Entropía de Shannon deslizante (256 bins). |
 | `512–615` | Strings e IoCs (IPs, URLs, claves de registro, ratios). |
 | `616–625` | Metadatos generales (tamaño virtual vs. físico). |
-| `626–687` | Cabeceras COFF / PE y Data Directories. |
+| `626–687` | Cabeceras COFF / PE (categóricos hasheados + 11 numéricos). |
 | `688–942` | Información de secciones (`.text`, `.rsrc`, flags RWX). |
 | `943–2222` | Hashing de imports (IAT, SHA-256 mod 1 280). |
 | `2223–2350` | Hashing de exports (EAT, SHA-256 mod 128). |
+| `2351–2380` | Data Directories (tamaño + RVA, 15 × 2). |
+| `2381–2386` | OVERLAY_6 — `slack_ratio`, `slack_bytes_log`, `file_size_log`, `imports_log`, `has_cert`, `stub_overlay_pattern` (se concatena tras escalar cada bloque). |
 
 **Hardening anti-evasión:**
 
@@ -488,13 +491,14 @@ Más de **150 pruebas formales** validan:
 
 ## 23. Métricas y Resultados
 
-| Métrica | Valor (test-set de campo) |
-|---------|---------------------------|
-| **Accuracy** | 98.15% |
-| **F1-Score** | 98.45% |
-| **Precision** | 98.70% |
-| **Recall (TPR)** | 98.20% |
-| **AUC-ROC** | 0.985 |
+| Métrica | Valor (validación temporal SOREL-20M, 700k, threshold 0.5) |
+|---------|-----------------------------------------------------------|
+| **Accuracy** | 97.08% |
+| **F1-Score** | 95.42% |
+| **Precision** | 94.35% |
+| **Recall (TPR)** | 96.52% |
+| **AUC-ROC** | 0.9956 |
+| **AUC-PR** | 0.9927 |
 | **Inferencia ONNX pura** | ~15 ms |
 | **E2E por archivo** | ~400–500 ms |
 
@@ -508,7 +512,7 @@ Más de **150 pruebas formales** validan:
 
 | Vista | Resultado |
 |-------|-----------|
-| **ML puro** | `BENIGN` (score 0.0) — el header PE engaña al modelo. |
+| **ML puro** | `BENIGN` (score 0.0913) — las features estáticas no bastan para marcarlo. |
 | **Multicapa** | `CRITICAL` (score 105) — 98.7% de overlay con entropía 7.99 (cifrado) detectado por el motor correlacionado. |
 
 > Forense completo: [`docs/academico/11_analisis_sample1.md`](docs/academico/11_analisis_sample1.md) · Hallazgos: [`docs/academico/12_hallazgos.md`](docs/academico/12_hallazgos.md)

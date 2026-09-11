@@ -206,15 +206,16 @@ def _cmd_verify_model(args: argparse.Namespace) -> int:
 
 def _cmd_init_manifest(args: argparse.Namespace) -> int:
     artifact_paths = [
-        "models/best_model.onnx",
-        "models/best_model.onnx.data",
-        "models/scaler.pkl",
+        "models/shadow_net_sorel_7m_v1.1.onnx",
+        "models/scaler_ember_v1.1.pkl",
+        "models/scaler_overlay_v1.1.pkl",
     ]
     manifest = create_manifest_from_artifacts(
         Path("."),
         artifact_paths,
         version=args.version,
         threshold=args.threshold,
+        feature_dim=args.feature_dim,
     )
     write_manifest(manifest, Path(args.output))
     print(f"Manifest written to: {args.output}")
@@ -307,14 +308,15 @@ def build_parser() -> argparse.ArgumentParser:
     scan_parser.set_defaults(func=_cmd_scan)
 
     verify_parser = subparsers.add_parser("verify-model", help="Verify artifact hashes and sizes")
-    verify_parser.add_argument("--manifest", default="model_manifest.json")
+    verify_parser.add_argument("--manifest", default="models/model_manifest.json")
     verify_parser.add_argument("--skip-size", action="store_true")
     verify_parser.set_defaults(func=_cmd_verify_model)
 
     init_manifest_parser = subparsers.add_parser("init-manifest", help="Generate manifest from current artifacts")
-    init_manifest_parser.add_argument("--version", default="v1.0.0")
+    init_manifest_parser.add_argument("--version", default="v1.1.0")
     init_manifest_parser.add_argument("--threshold", type=float, default=0.5)
-    init_manifest_parser.add_argument("--output", default="model_manifest.json")
+    init_manifest_parser.add_argument("--feature-dim", type=int, default=2387)
+    init_manifest_parser.add_argument("--output", default="models/model_manifest.json")
     init_manifest_parser.set_defaults(func=_cmd_init_manifest)
 
     update_parser = subparsers.add_parser("update-model", help="Update model artifacts from manifest")

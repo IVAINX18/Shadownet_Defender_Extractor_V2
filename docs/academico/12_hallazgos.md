@@ -17,7 +17,7 @@ Risk score:        105 (CRITICAL)
 Operational status: DANGEROUS
 ```
 
-**Descripción**: El modelo neuronal (2381 features, SOREL-20M) asignó probabilidad prácticamente nula de malware a un binario donde el 98.7% de su contenido (19.7 MB) es un overlay con entropía máxima (7.9987). La capa de Overlay Analysis detectó correctamente la anomalía y el Risk Engine elevó el `operational_status` a DANGEROUS con 6 indicadores activados.
+**Descripción**: El modelo neuronal (2387 features, SOREL-20M, score 0.0913) asignó probabilidad baja de malware a un binario donde el 98.7% de su contenido (19.7 MB) es un overlay con entropía máxima (7.9987). La capa de Overlay Analysis detectó correctamente la anomalía y el Risk Engine elevó el riesgo a CRITICAL con 6 indicadores activados (`operational_status` SUSPICIOUS).
 
 **Impacto**: Un sistema que solo usara ML hubiera producido un falso negativo. El sistema multicapa detectó la amenaza mediante una capa analítica independiente.
 
@@ -27,45 +27,45 @@ Operational status: DANGEROUS
 
 ## H-02 — Test set sintético incompatible con el scaler de producción
 
-**Evidencia**: Análisis directo de `data/test_set/X_test.npy` y `models/scaler.pkl`, 2026-08-18.
+**Evidencia**: Análisis directo de `data/test_set/X_test.npy` y `models/scaler_ember_v1.1.pkl`, 2026-09-11.
 
 ```python
-# Post-scaling statistics:
+# Post-scaling statistics (pipeline completo 2387):
 mean  = 21.73  (expected: ~0)
-std   = 112.1  (expected: ~1)
+std   = 114.74 (expected: ~1)
 AUC-ROC con scaler = 0.50 (equivalente a aleatorio)
-AUC-ROC sin scaler, etiquetas invertidas = 1.00 (sintético perfectamente separable)
+AUC-ROC sin scaler, etiquetas invertidas = 0.50 (no informativo)
 ```
 
-**Descripción**: El archivo `data/test_set/X_test.npy` contiene 1000 muestras con features en rango [0, 1] que no son compatibles con el `scaler.pkl` de producción. Al aplicar el scaler, las features se distorsionan severamente. El test set es sintético y perfectamente separable (AUC=1.0) — diseñado para validar el pipeline de integración, no para medir rendimiento estadístico del modelo.
+**Descripción**: El archivo `data/test_set/X_test.npy` contiene 1000 muestras con features en rango [0, 1] que no son compatibles con el scaler EMBER de producción. Al aplicar el scaler, las features se distorsionan severamente. El test set es sintético y no informativo — diseñado para validar el pipeline de integración, no para medir rendimiento estadístico del modelo.
 
 **Impacto**: No es posible reportar métricas de accuracy, FPR, FNR del modelo ML a partir de los artefactos disponibles en el repositorio.
 
 **Relevancia científica**: Revela una deuda técnica importante: el proyecto carece de un conjunto de evaluación real y representativo para el modelo ML.
 
-**Actualización 2026-08-25**: Se recuperaron los outputs ejecutados del entrenamiento original en `Model_Collab/ShadowNet Defender - v3.0.ipynb`. Las métricas del modelo **sobre su distribución híbrida de evaluación** (accuracy=0.9815, F1=0.9845, FPR≈1.88%, FNR≈1.80%) sí existen y están documentadas en `07_metricas_y_resultados.md`.
+**Actualización 2026-09-11**: El modelo vigente es v1.1.0 (MLP 2387, 7M SOREL). Sus métricas **sobre validación temporal** (accuracy=0.9708, F1=0.9542, ROC-AUC=0.9956) existen y están documentadas en `07_metricas_y_resultados.md`. El modelo anterior v1.0.1 quedó respaldado en `models/legacy_2381/` como registro histórico.
 
-**Actualización 2026-08-25 (auditoría del scaler)**: La inspección directa de `models/scaler.pkl` descarta corrupción (0 inf, 0 NaN en `mean_`/`scale_`); el overflow del notebook afectó solo a los logs agregados. La incompatibilidad es desajuste de dominio entre el test set sintético [0,1] y las distribuciones crudas de SOREL-20M, no un defecto del artefacto. Ver L-05a en `13_limitaciones.md`.
+**Actualización 2026-09-11 (scaler vigente)**: El scaler EMBER v1.1.0 se verifica por hash en `models/model_manifest.json`. La incompatibilidad con el test sintético es desajuste de dominio entre el test set [0,1] y las distribuciones crudas de SOREL-20M, no un defecto del artefacto. Ver L-05a en `13_limitaciones.md`.
 
 ---
 
 ## H-03 — Falso positivo YARA en software legítimo (Sysinternals)
 
-**Evidencia**: Ejecución real de `engine.scan_file('samples/procexp64.exe')`, 2026-08-18.
+**Evidencia**: Ejecución real de `engine.scan_file('samples/procexp64.exe')`, 2026-09-11.
 
 ```
 Archivo:       procexp64.exe (Process Explorer, Sysinternals/Microsoft)
-YARA match:    Keylogger_Generic (categoría: spyware)
-ML score:      1.0000
-ML label:      MALWARE
-Operational:   UNKNOWN
+YARA match:    Keylogger_Generic (categoría: spyware, degradado por whitelist)
+ML score:      0.0101
+ML label:      BENIGN (solo-ML)
+Operational:   SUSPICIOUS (riesgo HIGH)
 ```
 
-**Descripción**: Process Explorer, una herramienta legítima de monitoreo del sistema de Microsoft, activa la regla YARA `Keylogger_Generic`. El modelo ML también produce score=1.0 (MALWARE) para este archivo. El `operational_status` quedó en UNKNOWN — una condición no manejada por el Risk Engine.
+**Descripción**: Process Explorer, una herramienta legítima de monitoreo del sistema de Microsoft, activa la regla YARA `Keylogger_Generic`. El modelo v1.1.0 produce score=0.0101 (el falso positivo del modelo anterior quedó corregido) y el `operational_status` es SUSPICIOUS por el match YARA degradado.
 
 **Impacto**: La tasa de falsos positivos de las reglas YARA actuales no es despreciable. Herramientas de administración de sistemas, debuggers y profilers comparten API y patrones de comportamiento con malware de monitoreo.
 
-**Relevancia científica**: Evidencia la necesidad de un mecanismo de whitelisting o ajuste de reglas YARA para reducir FPR en entornos de administración. También revela un estado no manejado (`UNKNOWN`) en el Risk Engine.
+**Relevancia científica**: Evidencia la necesidad de seguir ajustando reglas YARA y whitelist para reducir FPR en entornos de administración.
 
 ---
 
@@ -95,7 +95,7 @@ if operational_status == "DANGEROUS" and label == "BENIGN":
     pass  # silencio — el caso más importante del sistema
 ```
 
-**Descripción**: El cliente n8n está configurado para enviar alertas solo cuando el label ML es "malicious". El caso de `sample1.exe` — donde ML=BENIGN pero operational_status=DANGEROUS — no generaría ninguna alerta.
+**Descripción**: Las alertas (hoy vía webhook Supabase → Edge Function; n8n deprecated) se envían solo con `result='malicious'` u `operational_status='DANGEROUS'`. El caso de `sample1.exe` — donde ML=SUSPICIOUS pero el riesgo es CRITICAL — no generaría ninguna alerta.
 
 **Impacto**: El hallazgo científico más importante del sistema (detección de overlay payload que el ML no detectó) no dispara la cadena de alertas automatizadas.
 
@@ -154,8 +154,8 @@ ratio_analizado=50.2%
 degradation_reason=file_size_exceeded_10mb
 ```
 
-**Descripción**: El extractor usa muestreo distribuido para archivos >10 MB, analizando inicio, centro y fin del archivo para evitar OOM. Para sample1.exe (20.9 MB), solo el 50.15% fue analizado por el extractor de features.
+**Descripción**: Para archivos >10 MB el diagnóstico reporta muestreo distribuido (inicio, centro y fin) para evitar OOM. Para sample1.exe (20.9 MB), el diagnóstico indica 50.2% analizado; la ruta primaria EMBER, en cambio, usa los bytes completos (límite 150 MB) para el vector de features.
 
-**Impacto**: Un atacante que distribuya features maliciosas específicamente en las regiones no muestreadas podría evadir la capa ML. En este caso, además, el overlay está al final del archivo — que sí es muestreado — pero la entropía del overlay se mezcla con la entropía del PE en el vector de features.
+**Impacto**: Un atacante que distribuya features maliciosas específicamente en regiones no muestreadas podría evadir diagnósticos basados en la muestra, pero no el vector ML (bytes completos). En este caso, además, el overlay está al final del archivo — que sí es muestreado — pero la entropía del overlay se mezcla con la entropía del PE en el vector de features.
 
 **Relevancia científica**: Define un límite de cobertura del extractor y un vector de evasión teórico para archivos grandes.

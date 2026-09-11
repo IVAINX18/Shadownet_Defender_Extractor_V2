@@ -47,10 +47,10 @@ CLI / API REST (FastAPI)
 [Fase 2] UPX / Packer Detection ← indicadores en extractor (high_entropy, ratio)
         │
         ▼
-[Fase 3] Feature Extractor (2381 dims)
+[Fase 3] Feature Extractor (2381 dims + OVERLAY_6 → 2387)
         │
         ▼
-[Fase 4] ML / ONNX Inference    ← red neuronal 2381→512→256→128→1
+[Fase 4] ML / ONNX Inference    ← red neuronal 2387→512→256→128→1
         │
         ▼
 [Fase 5] Overlay Analysis       ← entropía overlay, embedded PE, YARA overlay
@@ -78,10 +78,10 @@ Fuente: `core/engine.py`, auditado directamente.
 ## Hallazgos principales (obtenidos de ejecuciones reales)
 
 **H-01 — Divergencia ML vs. Heurística en sample1.exe**
-El modelo ML asignó score=0.0000 (BENIGN) a `sample1.exe`, mientras el Risk Engine determinó `operational_status=DANGEROUS`, `risk_level=CRITICAL`, `risk_score=105`. La capa de Overlay Analysis detectó 6 indicadores críticos: overlay_ratio=98.7%, overlay_entropy=7.9987, global_entropy=7.9861 y packer_indicators=True.
+El modelo ML asignó score=0.0913 (SUSPICIOUS) a `sample1.exe`, mientras el Risk Engine determinó `operational_status=SUSPICIOUS`, `risk_level=CRITICAL`. La capa de Overlay Analysis detectó 6 indicadores críticos: overlay_ratio=98.7%, overlay_entropy=7.9987, global_entropy=7.9861 y packer_indicators=True.
 
 **H-02 — Test set sintético incompatible con el scaler de producción**
-El archivo `data/test_set/X_test.npy` contiene 1000 muestras (500 benign / 500 malware) con features normalizadas en [0,1]. El `scaler.pkl` de producción fue ajustado sobre datos con distribuciones estadísticas incompatibles (media post-escalado=21.73, desviación=112.1). Las métricas del modelo no pueden calcularse sobre este test set con validez.
+El archivo `data/test_set/X_test.npy` contiene 1000 muestras (500 benign / 500 malware) con features normalizadas en [0,1]. El scaler EMBER de producción fue ajustado sobre datos con distribuciones estadísticas incompatibles (media post-escalado=21.73, desviación=114.74). Las métricas del modelo no pueden calcularse sobre este test set con validez.
 
 **H-03 — YARA falso positivo sobre procexp64.exe**
 Process Explorer, herramienta legítima de Sysinternals, activa la regla `Keylogger_Generic`. Esto representa un falso positivo documentado que afecta la tasa FPR del sistema en escenarios de uso real.

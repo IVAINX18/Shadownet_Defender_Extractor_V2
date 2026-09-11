@@ -1,7 +1,7 @@
 # Comparación: Sistema Solo-ML vs. Sistema Híbrido Multicapa
 
 > Comparación basada en ejecuciones reales del pipeline sobre muestras disponibles.
-> Ejecutado 2026-08-18.
+> Actualizado 2026-09-11 al modelo v1.1.0 (mediciones originales: 2026-08-18).
 
 ---
 
@@ -11,7 +11,7 @@
 Entrada (binario PE)
         │
         ▼
-Feature Extractor (2381 dims)
+Feature Extractor (2381 dims EMBER + OVERLAY_6 → 2387)
   - ByteHistogram (256)
   - ByteEntropy (256)
   - Strings (104)
@@ -20,13 +20,15 @@ Feature Extractor (2381 dims)
   - Section (255)
   - Imports (1280)
   - Exports (128)
+  - DataDirectories (30)
+  - OVERLAY_6 (slack, tamaño, imports, certificado, patrón stub)
         │
         ▼
-StandardScaler (Z-score)
+StandardScaler por bloque (Z-score: EMBER + OVERLAY)
         │
         ▼
-Red Neuronal ONNX
-  2381 → 512 → 256 → 128 → 1 (sigmoid)
+Red Neuronal ONNX v1.1.0
+  2387 → 512 → 256 → 128 → 1 (sigmoid)
         │
         ▼
 score ∈ [0.0, 1.0]
@@ -49,7 +51,7 @@ Entrada (binario PE)
 [F1] YARA Scanner ──────────────────────── match? → DANGEROUS (early exit)
         │
         ▼
-[F2] Feature Extractor (2381 dims)
+[F2] Feature Extractor (2381 dims + OVERLAY_6 → 2387)
         │
         ▼
 [F3] ML/ONNX Inference
@@ -87,9 +89,9 @@ ScanResult completo:
 
 | Aspecto | Solo ML | Híbrido Multicapa |
 |---------|---------|-------------------|
-| ML score | 0.0000 | 0.0000 (idéntico) |
-| ML label | BENIGN | BENIGN (idéntico) |
-| Veredicto final | **BENIGN** | **DANGEROUS** |
+| ML score | 0.0913 | 0.0913 (idéntico) |
+| ML label | BENIGN | SUSPICIOUS (correlación) |
+| Veredicto final | **BENIGN** | **SUSPICIOUS** |
 | Risk level | — | CRITICAL |
 | Risk score | — | 105 |
 | Overlay analizado | No | 19.7 MB |
@@ -102,20 +104,20 @@ ScanResult completo:
 
 | Aspecto | Solo ML | Híbrido Multicapa |
 |---------|---------|-------------------|
-| YARA match | `Keylogger_Generic` | `Keylogger_Generic` |
-| ML score | 1.0000 | 1.0000 (idéntico) |
-| ML label | MALWARE | MALWARE (idéntico) |
-| Veredicto final | **MALWARE** | **UNKNOWN** |
-| Risk level | — | LOW |
-| Detección correcta | ❌ Falso Positivo | ⚠️ UNKNOWN (no resuelto) |
+| YARA match | `Keylogger_Generic` | `Keylogger_Generic` (degradado por whitelist) |
+| ML score | 0.0101 | 0.0101 (idéntico) |
+| ML label | BENIGN | SUSPICIOUS (correlación) |
+| Veredicto final | **BENIGN** | **SUSPICIOUS** |
+| Risk level | — | HIGH |
+| Detección correcta | ✅ Correcto | ✅ Correcto (con advertencia YARA) |
 
-**Nota**: En este caso, el sistema híbrido tampoco resolvió el falso positivo. El `operational_status` quedó en UNKNOWN por una condición no manejada (YARA match + Risk Engine sin triggers adicionales). El sistema solo-ML tampoco lo habría resuelto.
+**Nota**: El falso positivo del modelo anterior (score 1.0) quedó corregido en v1.1.0 (score 0.0101). El match YARA persiste pero se degrada por whitelist a SUSPICIOUS.
 
 ### eicar.txt (test EICAR — no PE)
 
 | Aspecto | Solo ML | Híbrido Multicapa |
 |---------|---------|-------------------|
-| ML score | 0.0001 | 0.0001 (idéntico) |
+| ML score | 0.0040 | 0.0040 (idéntico) |
 | ML label | BENIGN | BENIGN |
 | YARA match | 0 | 0 |
 | Veredicto final | BENIGN | CLEAN |
@@ -129,7 +131,7 @@ ScanResult completo:
 
 1. **Detección de overlay payloads**: confirmada en sample1.exe. El overlay de 19.7 MB con entropía 7.9987 fue detectado como DANGEROUS, situación que el solo-ML produce como BENIGN.
 
-2. **Detección de binarios .NET ofuscados**: DotNet Analysis detectó ofuscación en sample2.exe (dotnet_risk_score=28). El solo-ML produciría el mismo BENIGN sin contexto adicional.
+2. **Detección de binarios .NET ofuscados**: DotNet Analysis detectó ofuscación en sample2.exe (dotnet_risk_score=28). El solo-ML aislado queda en BENIGN (score 0.4660 < 0.5); la correlación con `ml_onnx` + DotNet lo eleva a SUSPICIOUS.
 
 3. **Evidencias auditables**: el sistema híbrido produce `triggered_indicators`, `heuristic_assessment.justification`, y evidencias IL forenses. El solo-ML no produce explicación alguna.
 
@@ -143,15 +145,15 @@ ScanResult completo:
 
 ## Limitaciones del sistema híbrido (verificadas)
 
-1. **Falsos positivos YARA**: las reglas actuales activan sobre software legítimo (procexp64.exe). El sistema híbrido no tiene mecanismo de whitelisting implementado actualmente.
+1. **Falsos positivos YARA**: las reglas actuales activan sobre software legítimo (procexp64.exe). Existe whitelist (`yara_exclusions`) que degrada el match a SUSPICIOUS; el modelo v1.1.0 además ya no acompaña el FP (score 0.0101).
 
 2. **BehavioralShield no integrado**: la capa de monitoreo dinámico (psutil) existe en código pero no está conectada al pipeline. Si estuviera integrada, añadiría una 8ª capa de detección.
 
 3. **IL Behavioral solo para .NET**: el 70%+ del malware actual es nativo (C/C++/Delphi). La capa IL no aporta para esos binarios.
 
-4. **Mayor latencia**: el pipeline completo tarda 1,240 ms para sample1.exe vs. ~415 ms para solo extracción+ML. La sobrecarga de las capas adicionales puede ser relevante en análisis masivo en tiempo real.
+4. **Mayor latencia**: el pipeline completo tarda ~2,026 ms para sample1.exe (extracción ~1,501 ms + resto de capas) vs. ~1,516 ms para solo extracción+ML. La sobrecarga de las capas adicionales puede ser relevante en análisis masivo en tiempo real.
 
-5. **n8n no alerta para operational_status DANGEROUS con label BENIGN**: el caso más importante detectado por el sistema híbrido (sample1.exe) no generaría alerta por n8n. Este es un bug de integración documentado en la auditoría.
+5. **Alertas solo en `malicious`/`DANGEROUS`**: n8n está deprecated (alertas vía webhook Supabase → Edge Function). Casos SUSPICIOUS relevantes como sample1.exe no generan alerta automática; es un gap de integración documentado en la auditoría.
 
 ---
 
@@ -164,7 +166,7 @@ ScanResult completo:
 | Explicabilidad | ❌ Opaco | ✅ Evidencias forenses |
 | Detección de firma conocida | ❌ (sin YARA) | ✅ (con YARA) |
 | Tolerancia a fallos | Baja | Alta |
-| Tiempo de análisis (archivo grande) | ~415 ms | ~1,240 ms |
+| Tiempo de análisis (archivo grande) | ~1,516 ms | ~2,026 ms |
 | Falsos positivos YARA | N/A | Presentes |
 | Auditable por analista | No | Sí |
 | Monitoreo dinámico | No | No (pendiente) |

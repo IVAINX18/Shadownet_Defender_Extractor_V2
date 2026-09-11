@@ -11,21 +11,21 @@
 
 El único conjunto de datos de evaluación disponible (`data/test_set/`) es sintético y no compatible con el scaler de producción. No es posible calcular métricas estadísticas reales del modelo (accuracy, FPR, FNR) sobre datos de campo.
 
-**Impacto**: El sistema no puede reportar rendimiento verificable del modelo ML sobre datos de campo. *Nota 2026-08-25*: las métricas del entrenamiento original (accuracy=0.9815, F1=0.9845, FPR≈1.88%, FNR≈1.80%) fueron recuperadas de `Model_Collab/ShadowNet Defender - v3.0.ipynb` y documentadas en `07_metricas_y_resultados.md`; son válidas únicamente para la distribución híbrida de evaluación del propio entrenamiento.
+**Impacto**: El sistema no puede reportar rendimiento verificable del modelo ML sobre datos de campo. *Nota 2026-09-11*: las métricas del modelo v1.1.0 (accuracy=0.9708, F1=0.9542, ROC-AUC=0.9956) fueron medidas sobre validación temporal 700k y están documentadas en `07_metricas_y_resultados.md`; son válidas únicamente para esa distribución de evaluación.
 
 ---
 
-### L-05a — Auditoría del scaler de producción (2026-08-25): NO corrupto
+### L-05a — Auditoría de los scalers de producción (2026-09-11): verificados
 
-Auditoría directa de `models/scaler.pkl` (StandardScaler, joblib, sklearn 1.7.0):
+Auditoría de `models/scaler_ember_v1.1.pkl` (2381) y `models/scaler_overlay_v1.1.pkl` (6):
 
-- **Sin corrupción**: `mean_` y `scale_` contienen 0 valores inf y 0 NaN. El `RuntimeWarning: overflow` del notebook afectó únicamente al cálculo *agregado* para impresión de logs (`X_train.mean()` sobre 3.57M×2381 en float32), no a las estadísticas por columna almacenadas.
-- **Distribuciones extremas pero legítimas**: 149 columnas (6.3%) tienen media o std extrema (p. ej. col 3: mean≈6.0e7, std≈4.3e8; col 687: std≈1.1e16), consistentes con features crudas de tamaño/offsets de SOREL-20M sin normalización previa.
-- **Archivos**: el scaler de Colab y el de producción son funcionalmente idénticos (mismos parámetros; diff de bytes solo por serialización).
+- **Integridad**: hashes verificados contra `models/model_manifest.json` (`verify-model: OK`).
+- **Alineación**: `tests/test_ember_feature_alignment.py` fija el contrato (vector 2381 finito, max|z| < 100, <1% dims con |z|>10 sobre corpus local; cross-check contra vectores SOREL almacenados sin explosiones).
+- **Diagnóstico vigente**: la incompatibilidad documentada en H-02/L-05 no es corrupción de scalers sino **desajuste de dominio**: `data/test_set/X_test.npy` (rango [0,1]) proviene de una distribución radicalmente distinta a la de entrenamiento.
 
-**Diagnóstico corregido**: la incompatibilidad documentada en H-02/L-05 no es corrupción del scaler sino **desajuste de dominio**: `data/test_set/X_test.npy` (rango [0,1]) proviene de una distribución radicalmente distinta a la de entrenamiento. Sobre ese test set, el escalado produce |z|>100 en 198 columnas — comportamiento esperado ante datos fuera de dominio, no evidencia de artefacto dañado.
+**Impacto**: Los scalers son válidos para su dominio de entrenamiento. La limitación se reduce a: falta de conjunto de evaluación representativo de campo. No es reparable sin datos, pero tampoco lo requiere: el modelo en producción usa los scalers con los que fue entrenado.
 
-**Impacto**: El scaler es válido para su dominio de entrenamiento. La limitación se reduce a: falta de conjunto de evaluación representativo del dominio de entrenamiento y de campo. No es reparable sin datos, pero tampoco lo requiere: el modelo en producción usa el scaler con el que fue entrenado.
+> Nota histórica: la auditoría del scaler anterior (`scaler.pkl`, 2026-08-25) descartó corrupción (0 inf, 0 NaN); ese artefacto quedó respaldado en `models/legacy_2381/`.
 
 ---
 
@@ -45,19 +45,19 @@ El análisis IL requiere tablas de metadatos CLR. Para binarios nativos (C, C++,
 
 ---
 
-### L-04 — Sin interpretabilidad del modelo ML (no hay SHAP/LIME)
+### L-04 — Interpretabilidad del modelo ML (SHAP con costo)
 
-El modelo neuronal es una caja negra. No está implementada ninguna técnica de interpretabilidad de features individuales (SHAP, LIME, Integrated Gradients).
+El modelo neuronal expone atribución por feature vía SHAP KernelExplainer (`core/explain/shap_explainer.py`, 2 387 nombres). Persisten límites operativos: `nsamples=100` tarda 10–25 s en CPU con timeout de 30 s, y sin `X_test.npy` se usa background sintético.
 
-**Impacto**: No es posible determinar qué features del vector de 2381 dimensiones contribuyeron al score. La explicabilidad está disponible solo a nivel de capas heurísticas y IL.
+**Impacto**: Es posible determinar qué features del vector de 2387 dimensiones contribuyeron al score, pero solo bajo demanda y con latencia alta. La explicabilidad de rutina sigue disponible a nivel de capas heurísticas y IL.
 
 ---
 
-### L-05 — Scaler de producción incompatible con el test set
+### L-05 — Scalers de producción incompatibles con el test set sintético
 
-El `scaler.pkl` fue ajustado sobre datos con distribuciones incompatibles con el test set disponible. El pipeline de producción usa el scaler, pero su validación formal es imposible sin el conjunto de entrenamiento original.
+Los scalers (`scaler_ember_v1.1.pkl`, `scaler_overlay_v1.1.pkl`) fueron ajustados sobre la selección 7M de SOREL-20M, incompatible con el test set disponible. Su validación formal de campo es imposible sin corpus real.
 
-**Impacto**: Potencial degradación de rendimiento del modelo si el scaler no está correctamente ajustado para el dominio de datos reales. Ver L-05a para la causa raíz (overflow numérico).
+**Impacto**: Potencial degradación de rendimiento del modelo si los scalers no están correctamente ajustados para el dominio de datos reales. Ver L-05a para el estado de verificación.
 
 ---
 
@@ -117,15 +117,15 @@ Si un binario malicioso incluye las magic bytes de NSIS o InnoSetup al inicio de
 
 ### R-03 — Evasion del modelo ML por adversarial features
 
-Un atacante con acceso a los artefactos del modelo (`best_model.onnx`, `scaler.pkl`) podria calcular perturbaciones en el espacio de features para producir un score bajo manteniendo la funcionalidad maliciosa.
+Un atacante con acceso a los artefactos del modelo (`shadow_net_sorel_7m_v1.1.onnx`, scalers v1.1) podria calcular perturbaciones en el espacio de features para producir un score bajo manteniendo la funcionalidad maliciosa.
 
-**Nota F2 (T-09)**: Los artefactos `models/best_model.onnx` y `models/scaler.pkl` deben tratarse como secretos operacionales. Su exposicion permite construir ejemplos adversariales dirigidos sin necesidad de acceso al codigo fuente. No compartir ni exponer via endpoint publico.
+**Nota F2 (T-09)**: Los artefactos `models/shadow_net_sorel_7m_v1.1.onnx` y scalers v1.1 deben tratarse como secretos operacionales. Su exposicion permite construir ejemplos adversariales dirigidos sin necesidad de acceso al codigo fuente. No compartir ni exponer via endpoint publico.
 
 ### R-04 — Colisiones en feature hashing de imports (1280 buckets)
 
 Con 1280 buckets para 1000+ APIs posibles, el feature hashing del extractor de imports tiene alta probabilidad de colision (~30%). APIs con hashes similares son indistinguibles para el modelo.
 
-**Limitacion conocida F2 (T-09)**: Cambiar a 2048+ buckets requiere reentrenamiento completo y regeneracion de `models/scaler.pkl` + `models/best_model.onnx` — fuera del alcance de F2. **Mitigacion F2**: correlacion `num_imports==0 + executable_sections==1` en RiskEngine activa el indicador `suspicious_loader_no_imports` (+10 pts) para cubrir el caso de loader sin IAT que podria colapsar en el mismo bucket hash.
+**Limitacion conocida F2 (T-09)**: Cambiar a 2048+ buckets requiere reentrenamiento completo y regeneracion de modelo + scalers — fuera del alcance de F2. **Mitigacion F2**: correlacion `num_imports==0 + executable_sections==1` en RiskEngine activa el indicador `suspicious_loader_no_imports` (+10 pts) para cubrir el caso de loader sin IAT que podria colapsar en el mismo bucket hash.
 
 ### R-05 — Dependencia de Ollama para explicabilidad narrativa
 

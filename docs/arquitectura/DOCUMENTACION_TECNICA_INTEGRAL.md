@@ -206,9 +206,9 @@ Archivo en disco
 │  1. Muestreo distribuido (si > 10 MB)           │
 │  2. Parseo PE (strict → fast_load → RAW_FALLBACK)│
 │  3. Extracción por bloques (8 módulos)          │
-│  4. Concatenación → vector 2381 dims            │
-│  5. StandardScaler (scaler.pkl)                 │
-│  6. Inferencia ONNX (best_model.onnx)           │
+│  4. Concatenación → vector 2381 dims + OVERLAY_6 → 2387 │
+│  5. StandardScalers (ember 2381 + overlay 6)    │
+│  6. Inferencia ONNX (shadow_net_sorel_7m_v1.1.onnx) │
 │  7. Umbral → label MALWARE/BENIGN                │
 └────────┬─────────────────────────────────────────┘
          │
@@ -233,8 +233,8 @@ Archivo en disco
 
 | Módulo | Depende de | Proporciona |
 |--------|-----------|-------------|
-| `PEFeatureExtractor` | `pefile`, `numpy`, bloques `FeatureBlock` | `np.ndarray(2381,)` |
-| `ShadowNetModel` | `onnxruntime`, `joblib`, `scaler.pkl` | `float [0,1]` |
+| `PEFeatureExtractor` | `lief`, `numpy`, `extractors/ember_features.py` (canónico EMBER v2) + bloques `FeatureBlock` legacy (solo contingencia) | `np.ndarray(2381,)` |
+| `ShadowNetModel` | `onnxruntime`, `joblib`, `scaler_ember_v1.1.pkl` + `scaler_overlay_v1.1.pkl` | `float [0,1]` |
 | `ShadowNetEngine` | Extractor + Model + YARA + UPX | `dict` scan_result |
 | `scan_service` | `ShadowNetEngine`, DTOs Pydantic | `ScanResult` |
 | `ExplanationService` | `GroqClient`/`GeminiClient`/`TemplateExplainer` (SDK openai, cascada Tri-Fallover), `prompt_builder` | JSON explicativo |
@@ -254,11 +254,11 @@ _parse_pe()                      [PE_STRICT → PE_FASTLOAD → RAW_FALLBACK]
 │ Imports(1280) │ Exports(128)                          │
 └───────────────────────────────────────────────────────┘
         ↓
-Vector concatenado (2381 dims, float32)
+Vector concatenado (2381 dims, float32) + OVERLAY_6 → 2387
         ↓
-StandardScaler.transform()       [Z-Score: μ, σ precalculados]
+StandardScaler.transform() por bloque [Z-Score: μ, σ precalculados]
         ↓
-ONNX InferenceSession.run()      [MLP: 2381→512→256→128→1]
+ONNX InferenceSession.run()      [MLP: 2387→512→256→128→1, sigmoid incluido]
         ↓
 Score de maliciosidad [0.0 – 1.0]
         ↓
@@ -305,11 +305,11 @@ SOREL-20M fue creado conjuntamente por **Sophos AI** y **ReversingLabs** como be
 
 | Fuente | Muestras | Propósito |
 |--------|----------|-----------|
-| SOREL-20M (subconjunto estratificado) | 5.000.000 | Varianza global industrial |
-| ShadowNet-Original (colección propia in-the-wild) | 100.000 | Frescura 2024-2026 |
-| **Total** | **5.100.000** | — |
+| SOREL-20M (selección 7M, seed 42) | 7.000.000 (4 187 321 malware / 2 812 679 benignos) | Varianza global industrial |
+| Split temporal | 6.300.000 train / 700.000 val | Validación sobre muestras recientes |
+| **Total** | **7.000.000** | — |
 
-**Técnica de carga:** Memory-mapped files (`numpy.memmap`) para evitar cargar 48 GB en RAM.
+**Técnica de carga:** entrenamiento por streaming sin materializar el dataset completo en RAM (7.0M × 2381 × 4 B ≈ 66.7 GB).
 
 ## 5.5 Ventajas
 
@@ -329,7 +329,7 @@ SOREL-20M fue creado conjuntamente por **Sophos AI** y **ReversingLabs** como be
 
 # 6. Ingeniería de Características
 
-El vector final $\mathbf{x} \in \mathbb{R}^{2381}$ es la concatenación ordenada de 8 bloques. Los rangos canónicos están definidos en `PEFeatureExtractor.BLOCK_RANGES`:
+El vector final $\mathbf{x} \in \mathbb{R}^{2381}$ es la concatenación ordenada de 9 bloques EMBER v2, producida por la ruta primaria `extractors/ember_features.py` (LIEF). En inferencia se deriva OVERLAY_6 del bloque General y se concatena tras escalar cada bloque, de modo que el modelo recibe $\mathbf{x} \in \mathbb{R}^{2387}$. Los rangos canónicos están definidos en `PEFeatureExtractor.BLOCK_RANGES`:
 
 | Bloque | Rango | Dims | Clase |
 |--------|-------|------|-------|
@@ -337,10 +337,14 @@ El vector final $\mathbf{x} \in \mathbb{R}^{2381}$ es la concatenación ordenada
 | ByteEntropy | [256, 512) | 256 | Entropía |
 | Strings | [512, 616) | 104 | Strings/IoC |
 | General | [616, 626) | 10 | PE general |
-| Header | [626, 688) | 62 | Cabeceras PE |
-| Section | [688, 943) | 255 | Secciones |
+| Header | [626, 688) | 62 | Cabeceras PE (categóricos hasheados) |
+| Section | [688, 943) | 255 | Secciones (hash) |
 | Imports | [943, 2223) | 1280 | Imports (hash) |
 | Exports | [2223, 2351) | 128 | Exports (hash) |
+| DataDirectories | [2351, 2381) | 30 | Size + RVA (15 × 2) |
+| OVERLAY_6 (inferencia) | [2381, 2387) | 6 | Slack/tamaño/imports/certificado/patrón stub |
+
+> Nota: las subsecciones 6.1–6.8 documentan los módulos legacy (`extractors/*.py`, pefile), hoy reservados a la contingencia `RAW_FALLBACK` y al diagnóstico. La ruta primaria implementa el layout canónico EMBER v2 descrito arriba.
 
 ## 6.1 Features PE — Metadatos generales (10 dims)
 
@@ -500,13 +504,13 @@ $$x_i = \frac{1}{N}\sum_{j=1}^{N} \mathbf{1}(b_j = i)$$
 **Framework entrenamiento:** PyTorch  
 **Framework producción:** ONNX Runtime  
 
-$$\text{Input}(2381) \xrightarrow{\text{BN+ReLU+Drop}(0.3)} \text{Dense}(512) \xrightarrow{\text{BN+ReLU+Drop}(0.2)} \text{Dense}(256) \xrightarrow{\text{BN+ReLU+Drop}(0.1)} \text{Dense}(128) \xrightarrow{\sigma} \text{Output}(1)$$
+$$\text{Input}(2387) \xrightarrow{\text{BN+ReLU+Drop}(0.3)} \text{Dense}(512) \xrightarrow{\text{BN+ReLU+Drop}(0.2)} \text{Dense}(256) \xrightarrow{\text{BN+ReLU+Drop}(0.1)} \text{Dense}(128) \xrightarrow{\sigma} \text{Output}(1)$$
 
 ## 7.2 Cantidad de capas
 
 | Capa | Neuronas | Activación | Regularización |
 |------|----------|------------|----------------|
-| Entrada | 2381 | — | — |
+| Entrada | 2387 (2381 EMBER + 6 overlay) | — | — |
 | Oculta 1 | 512 | ReLU + BatchNorm1d | Dropout 0.3 |
 | Oculta 2 | 256 | ReLU + BatchNorm1d | Dropout 0.2 |
 | Oculta 3 | 128 | ReLU + BatchNorm1d | Dropout 0.1 |
@@ -523,28 +527,28 @@ $$\text{Input}(2381) \xrightarrow{\text{BN+ReLU+Drop}(0.3)} \text{Dense}(512) \x
 
 | Parámetro | Valor |
 |-----------|-------|
-| Loss | Binary Cross-Entropy (BCE) |
+| Loss | Binary Cross-Entropy con logits (`BCEWithLogitsLoss`) |
 | Optimizador | Adam, lr=0.001 |
-| Weight Decay | λ = 10⁻⁵ (L2) |
-| LR Scheduler | ReduceLROnPlateau (patience=3, factor=0.5) |
-| Épocas | 15 |
-| Hardware | GPU NVIDIA A100 (CUDA) |
-| Data loading | num_workers=4, memmap |
-| Early Stopping | Especificado en PRD (monitoreo de validación) |
+| LR Scheduler | Ninguno |
+| Épocas | 2 (best = final, val_loss 0.0864) |
+| Batch | 8192 |
+| Hardware | GPU NVIDIA Tesla P100 (torch 2.4.1+cu121) |
+| Data loading | Streaming por spans (sin materializar 7M×2387) |
+| Threshold | 0.5 |
 
 $$\mathcal{L} = -\frac{1}{N}\sum_{i=1}^{N}\left[y_i \log(\hat{y}_i) + (1-y_i)\log(1-\hat{y}_i)\right]$$
 
 ## 7.5 Validación
 
-- Split train/validation sobre subconjunto SOREL-20M.
-- Métricas monitorizadas: AUC-ROC, FPR@TPR=90%, TPR@FPR=1%.
-- Checkpoint del mejor modelo guardado como `best_model.pth` → exportado a ONNX.
+- Split temporal 6.300.000 train / 700.000 val (seed 42) sobre la selección 7M de SOREL-20M.
+- Métricas monitorizadas por época: loss, accuracy, precision, recall, F1, AUC-ROC, AUC-PR (train y val).
+- Checkpoint del mejor modelo guardado como `shadow_net_sorel_7m_v1.1_v5_best.pth` → exportado a ONNX con sigmoid incluido.
 
 ## 7.6 Preprocesamiento — StandardScaler (Z-Score)
 
 $$z_j = \frac{x_j - \mu_j}{\sigma_j + \epsilon}, \quad \epsilon = 10^{-8}$$
 
-Parámetros $\boldsymbol{\mu}, \boldsymbol{\sigma} \in \mathbb{R}^{2381}$ precalculados sobre 5.1M muestras, persistidos en `models/scaler.pkl`.
+Dos `StandardScaler` independientes, ajustados sobre las 7M muestras y nunca re-entrenados: $\boldsymbol{\mu}, \boldsymbol{\sigma} \in \mathbb{R}^{2381}$ en `models/scaler_ember_v1.1.pkl` (bloque EMBER) y $\boldsymbol{\mu}, \boldsymbol{\sigma} \in \mathbb{R}^{6}$ en `models/scaler_overlay_v1.1.pkl` (bloque OVERLAY_6).
 
 ## 7.7 Hiperparámetros de inferencia
 
@@ -569,11 +573,11 @@ Parámetros $\boldsymbol{\mu}, \boldsymbol{\sigma} \in \mathbb{R}^{2381}$ precal
 
 | Archivo | SHA256 (manifest) | Tamaño |
 |---------|-------------------|--------|
-| `best_model.onnx` | df832eaceb... | 9.299 B (header) |
-| `best_model.onnx.data` | 7482611c34... | 5.597.184 B |
-| `scaler.pkl` | b46e743cce... | 57.743 B |
+| `shadow_net_sorel_7m_v1.1.onnx` | 46874495... | 5.564.678 B (pesos inline, sin `.data`) |
+| `scaler_ember_v1.1.pkl` | a20feb5b... | 57.607 B |
+| `scaler_overlay_v1.1.pkl` | 42ab1cfd... | 594 B |
 
-Versión: v1.0.1 | Feature dim: 2381 | Formato: ONNX Opset 11
+Versión: v1.1.0 | Feature dim: 2387 | Formato: ONNX Opset 17 (modelo anterior respaldado en `models/legacy_2381/`)
 
 ---
 
@@ -607,18 +611,20 @@ Versión: v1.0.1 | Feature dim: 2381 | Formato: ONNX Opset 11
 ## 8.4 Feature vector generation
 
 ```python
-# Orden de concatenación (CRÍTICO — debe coincidir con entrenamiento):
+# Orden de concatenación (CRÍTICO — debe coincidir con entrenamiento, EMBER v2):
+# Ruta primaria: EmberPEFeatureExtractor (extractors/ember_features.py, LIEF).
 blocks = [
     ByteHistogram(),        # 256
     ByteEntropy(),          # 256
-    StringExtractorBlock(), # 104
+    StringExtractor(),      # 104
     GeneralFileInfo(),      # 10
-    HeaderFileInfo(),       # 62
-    SectionInfoBlock(),     # 255
-    ImportsFeatureBlock(),  # 1280
-    ExportsFeatureBlock()   # 128
+    HeaderFileInfo(),       # 62 (categóricos hasheados)
+    SectionInfo(),          # 255 (FeatureHasher)
+    ImportsInfo(),          # 1280 (256 libs + 1024 funciones)
+    ExportsInfo(),          # 128
+    DataDirectories(),      # 30 (15 x size+RVA)
 ]
-# Total: 2381
+# Total EMBER: 2381. En inferencia se concatena OVERLAY_6 → 2387.
 ```
 
 Cada bloque fallido produce vector de ceros del tamaño correspondiente (tolerancia a fallos en cascada).
@@ -842,7 +848,7 @@ Se observó que PEs empacados con UPX recibían scores benignos (~0.002) porque 
 
 ## H3. Feature Hashing con SHA256 es suficiente
 
-A pesar de colisiones teóricas en el hashing trick (Weinberger et al., 2009), SHA256 con 1280 dims para imports produce discriminación excelente (AUC 0.985). La redundancia del dataset compensa las colisiones.
+A pesar de colisiones teóricas en el hashing trick (Weinberger et al., 2009), el hashing de imports produce discriminación excelente (AUC-ROC 0.9956 en validación temporal). La redundancia del dataset compensa las colisiones.
 
 ## H4. El muestreo distribuido preserva señal discriminante
 
@@ -858,7 +864,7 @@ Cada mejora de robustez (Billion Strings, entropy limits, distributed sampling) 
 
 ## H7. ONNX Runtime es 46× más ligero que PyTorch
 
-La exportación ONNX reduce dependencias de ~700 MB a ~5 MB con inferencia comparable (< 15 ms vs ~20 ms), habilitando el empaquetado PyInstaller (~5.6 MB de pesos en `best_model.onnx.data`).
+La exportación ONNX reduce dependencias de ~700 MB a ~5 MB con inferencia comparable (< 15 ms vs ~20 ms), habilitando el empaquetado PyInstaller (~5.3 MB de pesos inline en `shadow_net_sorel_7m_v1.1.onnx`, sin archivo `.data`).
 
 ## Lecciones aprendidas
 
@@ -944,14 +950,18 @@ La exportación ONNX reduce dependencias de ~700 MB a ~5 MB con inferencia compa
 
 # RESULTADOS CLAVE DEL PROYECTO
 
-## R1. Métricas de clasificación (test set SOREL-20M)
+## R1. Métricas de clasificación (validación temporal SOREL-20M, 700k, threshold 0.5)
 
 | Métrica | Valor | Interpretación |
 |---------|-------|---------------|
-| **AUC-ROC** | **0.985** | Discriminación excelente |
-| **FPR** | **< 0.5%** @ TPR=90% | Mínimas falsas alarmas en operación agresiva |
-| **TPR** | **> 96%** @ FPR=1% | Alta detección con bajo ruido |
-| **Accuracy** | > 98% | Exactitud global |
+| **AUC-ROC** | **0.9956** | Discriminación excelente |
+| **AUC-PR** | **0.9927** | Robusto al desbalance 60/40 |
+| **Accuracy** | **97.08%** | Exactitud global |
+| **F1-Score** | **95.42%** | Balance precisión/recall |
+| **Precision** | 94.35% | TN 466 525 / FP 12 766 |
+| **Recall (TPR)** | 96.52% | TP 213 019 / FN 7 690 |
+
+> Puntos operativos (FPR@TPR=90%, TPR@FPR=1%) pendientes de evaluación de campo; no se reportan valores no medidos.
 
 ## R2. Rendimiento end-to-end
 
@@ -1017,11 +1027,11 @@ La exportación ONNX reduce dependencias de ~700 MB a ~5 MB con inferencia compa
 
 # 18. Conclusiones
 
-ShadowNet Defender demuestra empíricamente la viabilidad de aplicar **Deep Learning sobre análisis estático de PE** para detección proactiva de malware, alcanzando **AUC-ROC de 0.985** con un pipeline reproducible alineado con SOREL-20M.
+ShadowNet Defender demuestra empíricamente la viabilidad de aplicar **Deep Learning sobre análisis estático de PE** para detección proactiva de malware, alcanzando **AUC-ROC de 0.9956** (validación temporal 700k) con un pipeline reproducible alineado con SOREL-20M.
 
 Las conclusiones técnicas principales son:
 
-1. **El extractor robusto es tan crítico como el modelo.** Sin protecciones anti-evasión, un AUC de 0.985 en dataset limpio no se traduce en detección real frente a adversarios que explotan tamaño, strings y entropía.
+1. **El extractor robusto es tan crítico como el modelo.** Sin protecciones anti-evasión y sin alineación EMBER del vector, un AUC alto en dataset limpio no se traduce en detección real frente a adversarios que explotan tamaño, strings y entropía.
 
 2. **La arquitectura híbrida supera enfoques puros.** YARA captura lo conocido instantáneamente; UPX desempaca lo oculto; ML generaliza lo desconocido; LLM explica lo detectado.
 
@@ -1045,7 +1055,7 @@ Shadownet_Defender_Extractor_V2/
 ├── docs/                 # PRD, PROGRESS, guías, schema SQL
 ├── extractors/           # 8 bloques FeatureBlock + extractor.py
 ├── frontend/             # React + Electron (pages, components, services)
-├── models/               # best_model.onnx, scaler.pkl, model_manifest.json
+├── models/               # shadow_net_sorel_7m_v1.1.onnx, scaler_ember/overlay_v1.1.pkl, model_manifest.json (+ legacy_2381/)
 ├── requirements/         # Perfiles: base, ml, viz, dev (+ lockfiles)
 ├── samples/              # PEs de prueba (procexp64.exe)
 ├── scripts/              # Evaluación, diagnóstico, robustez, E2E
@@ -1074,7 +1084,8 @@ Shadownet_Defender_Extractor_V2/
 
 | Paquete | Versión mín. | Uso |
 |---------|-------------|-----|
-| pefile | ≥ 2023.2.7 | Parsing PE |
+| pefile | ≥ 2023.2.7 | Parsing PE (diagnóstico/contingencia) |
+| lief | ≥ 0.13 | Parseo PE canónico EMBER v2 |
 | numpy | ≥ 1.24 | Vectores |
 | onnxruntime | ≥ 1.16 | Inferencia |
 | scikit-learn | ≥ 1.3 | StandardScaler |
@@ -1124,7 +1135,7 @@ Shadownet_Defender_Extractor_V2/
 
 ## 20.1 Abstract (Resumen)
 
-> **ShadowNet Defender** es un sistema de detección estática de malware para ejecutables Windows (PE) basado en aprendizaje profundo. El sistema transforma cada binario en un vector de **2.381 características** compatible con el estándar EMBER 2.0 / SOREL-20M, lo normaliza mediante Z-Score y lo clasifica con una red neuronal profunda (MLP: 2381→512→256→128→1) exportada a ONNX, alcanzando un **AUC-ROC de 0.985** sobre el benchmark SOREL-20M. Se implementa un **extractor robusto anti-evasión** con nueve mecanismos de protección — incluyendo muestreo distribuido, fallback de características crudas, límites anti-DoS y telemetría de degradación — que garantiza análisis estable frente a técnicas de file bloating, billion strings y PE corruptos. El pipeline híbrido combina detección por firmas YARA, desempacado UPX automático e inferencia ML, complementado con explicaciones generadas por LLM vía cascada cloud Groq/Gemini con fallback offline. El sistema se despliega como aplicación desktop offline-first con API REST, persistencia cloud (Supabase) y automatización SOC vía Supabase Webhooks + Edge Functions (n8n solo rollback), demostrando la viabilidad de trasladar investigación académica en detección estática de malware a herramientas operativas.
+> **ShadowNet Defender** es un sistema de detección estática de malware para ejecutables Windows (PE) basado en aprendizaje profundo. El sistema transforma cada binario en un vector de **2.381 características** compatible con el estándar EMBER 2.0 / SOREL-20M, deriva 6 señales OVERLAY, normaliza cada bloque con su scaler Z-Score y clasifica el vector resultante de **2.387 dimensiones** con una red neuronal profunda (MLP: 2387→512→256→128→1) exportada a ONNX, alcanzando un **AUC-ROC de 0.9956** en validación temporal SOREL-20M (700k). Se implementa un **extractor robusto anti-evasión** con nueve mecanismos de protección — incluyendo muestreo distribuido, fallback de características crudas, límites anti-DoS y telemetría de degradación — que garantiza análisis estable frente a técnicas de file bloating, billion strings y PE corruptos. El pipeline híbrido combina detección por firmas YARA, desempacado UPX automático e inferencia ML, complementado con explicaciones generadas por LLM vía cascada cloud Groq/Gemini con fallback offline. El sistema se despliega como aplicación desktop offline-first con API REST, persistencia cloud (Supabase) y automatización SOC vía Supabase Webhooks + Edge Functions (n8n solo rollback), demostrando la viabilidad de trasladar investigación académica en detección estática de malware a herramientas operativas.
 
 ## 20.2 Palabras clave
 
@@ -1134,7 +1145,7 @@ Shadownet_Defender_Extractor_V2/
 
 La detección de malware mediante firmas estáticas enfrenta limitaciones fundamentales ante técnicas de evasión modernas como polimorfismo, empaquetado y ataques zero-day. En respuesta, la comunidad científica ha adoptado enfoques basados en Machine Learning sobre características estáticas de ejecutables PE, con datasets masivos como EMBER (2018) y SOREL-20M (2020) que habilitan modelos con AUC-ROC superiores a 0.98. Sin embargo, la transición de experimentos de laboratorio a herramientas desplegables enfrenta desafíos adicionales: extractores frágiles ante técnicas adversariales de evasión, dependencias pesadas de frameworks de entrenamiento, y ausencia de explicabilidad para analistas humanos.
 
-Este trabajo presenta **ShadowNet Defender**, un sistema integral que aborda estos desafíos mediante: (1) un extractor PE con protecciones anti-evasión documentadas y verificadas; (2) un pipeline híbrido que combina firmas YARA, desempacado UPX e inferencia DNN via ONNX Runtime; (3) explicabilidad asistida por LLM vía cascada cloud Groq/Gemini con fallback offline; y (4) una arquitectura de software modular desplegada como aplicación desktop offline-first. Presentamos la ingeniería de características de 2.381 dimensiones, la arquitectura del modelo, las mejoras de robustez implementadas, y los resultados experimentales obtenidos sobre SOREL-20M.
+Este trabajo presenta **ShadowNet Defender**, un sistema integral que aborda estos desafíos mediante: (1) un extractor PE con protecciones anti-evasión documentadas y verificadas; (2) un pipeline híbrido que combina firmas YARA, desempacado UPX e inferencia DNN via ONNX Runtime; (3) explicabilidad asistida por LLM vía cascada cloud Groq/Gemini con fallback offline; y (4) una arquitectura de software modular desplegada como aplicación desktop offline-first. Presentamos la ingeniería de características de 2.381 dimensiones (+6 OVERLAY → 2.387 de entrada al modelo), la arquitectura del modelo, las mejoras de robustez implementadas, y los resultados experimentales obtenidos sobre SOREL-20M.
 
 ## 20.4 Título científico propuesto
 

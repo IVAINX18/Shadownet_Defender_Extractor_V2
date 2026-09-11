@@ -13,7 +13,7 @@ En lugar de depender exclusivamente de un modelo único o de firmas estáticas (
 ```mermaid
 flowchart TD
     A[📁 Archivo PE .exe/.dll] --> B1[🛡️ Capa 1: Reglas YARA]
-    A --> B2[🔬 Capa 2: Extracción 2381-dim + Normalización]
+    A --> B2[🔬 Capa 2: Extracción 2381-dim + OVERLAY_6 + Normalización]
     B2 --> C2[🧠 Capa 3: Red Neuronal MLP ONNX]
     A --> B3[🔍 Capa 4: Overlay Analysis]
     A --> B4[⚙️ Capa 5: DotNet & IL Behavioral]
@@ -47,7 +47,7 @@ Ninguna técnica individual de detección de malware es perfecta contra todos lo
 ### 🛡️ Los 4 Pilares del Diseño Híbrido Multicapa
 
 1. **Cobertura Ortogonal (Complementariedad):**
-   Las capas no compiten; se complementan. Un atacante puede crear un malware sin firma YARA que logre engañar a la Red Neuronal (score ML = 0.0), pero el **Overlay Analysis** detectará que el 98.7% del archivo es un bloque de datos cifrados de alta entropía (caso verificado en `sample1.exe`).
+   Las capas no compiten; se complementan. Un atacante puede crear un malware sin firma YARA que logre engañar a la Red Neuronal (score ML bajo, p. ej. 0.09 en `sample1.exe`), pero el **Overlay Analysis** detectará que el 98.7% del archivo es un bloque de datos cifrados de alta entropía (caso verificado en `sample1.exe`).
 
 2. **Independencia y Tolerancia a Fallos:**
    Si una capa falla o no aplica (por ejemplo, si el binario no es .NET), el pipeline no se detiene. Continúa evaluando con las fases restantes (*Graceful Degradation*).
@@ -66,17 +66,18 @@ Ninguna técnica individual de detección de malware es perfecta contra todos lo
 El subsistema de Deep Learning abarca componentes de código, artefactos pre-entrenados y servicios de inferencia:
 
 1. **Artefactos del Modelo (`models/`):**
-   - `best_model.onnx` y `best_model.onnx.data`: Red neuronal entrenada y optimizada para producción (~5.6 MB de pesos).
-   - `scaler.pkl`: Objeto `StandardScaler` con los parámetros de media ($\mu$) y desviación estándar ($\sigma$) para 2,381 dimensiones.
-   - `model_manifest.json`: Registro oficial de versión (`v1.0.1`), umbrales e integridad mediante hashes SHA-256.
+   - `shadow_net_sorel_7m_v1.1.onnx`: Red neuronal entrenada y optimizada para producción (~5.3 MB de pesos, sin archivo `.data`).
+   - `scaler_ember_v1.1.pkl`: Objeto `StandardScaler` con media ($\mu$) y desviación ($\sigma$) para 2,381 dimensiones EMBER.
+   - `scaler_overlay_v1.1.pkl`: `StandardScaler` para las 6 señales OVERLAY.
+   - `model_manifest.json`: Registro oficial de versión (`v1.1.0`), umbrales e integridad mediante hashes SHA-256 (modelo anterior respaldado en `models/legacy_2381/`).
 
 2. **Motores de Inferencia y Explicabilidad (`models/inference.py`, `core/`):**
-   - `models/inference.py`: Ejecución de inferencia ligera con `onnxruntime`.
-   - `core/explainers/shap_explainer.py`: Algoritmo SHAP para auditoría de características.
+   - `models/inference.py`: Ejecución de inferencia ligera con `onnxruntime` (construye `ShadowNetFeatures_v1.1 = EMBER_2381 + OVERLAY_6 = 2387` vía `models/features_v1_1.py`).
+   - `core/explain/shap_explainer.py`: Algoritmo SHAP para auditoría de características (2 387 nombres).
    - `core/llm/`: Servicio de integración LLM vía cascada cloud Groq (`openai/gpt-oss-20b`) → Gemini (`gemini-3.5-flash-lite`) → TemplateExplainer offline, todo con SDK `openai` y endpoint OpenAI-compatible (ver `docs/TriFallover_Groq_Gemini_Template.md`).
 
-3. **Dataset y Pipeline de Entrenamiento (Histórico):**
-   - Entrenado en PyTorch con GPU NVIDIA A100 sobre un dataset de **5.1 millones de muestras** (5M de SOREL-20M + 100K muestras *in-the-wild* 2024–2026).
+3. **Dataset y Pipeline de Entrenamiento:**
+   - Entrenado en PyTorch (torch 2.4.1+cu121) con GPU NVIDIA Tesla P100 sobre **7.0 millones de muestras** SOREL-20M (seed 42; 4 187 321 malware / 2 812 679 benignos), split temporal 6.3M train / 0.7M val, 2 épocas, Adam lr=1e-3, `BCEWithLogitsLoss`, batch 8192, threshold 0.5.
 
 ---
 
@@ -88,9 +89,9 @@ El subsistema de Deep Learning abarca componentes de código, artefactos pre-ent
 ---
 
 ### ⚙️ ¿Cómo se usa?
-1. **Extracción:** Al recibir un binario, `PEFeatureExtractor` genera un vector crudo de 2381 dimensiones.
-2. **Estandarización:** Se aplica `scaler.pkl` para normalizar los valores al rango esperado ($Z = \frac{x - \mu}{\sigma}$).
-3. **Inferencia ONNX:** El vector normalizado entra a `best_model.onnx` vía `onnxruntime.InferenceSession`.
+1. **Extracción:** Al recibir un binario, `PEFeatureExtractor` genera un vector crudo EMBER de 2381 dimensiones (ruta canónica `extractors/ember_features.py`, LIEF).
+2. **Estandarización:** Se deriva OVERLAY_6 del bloque General y se aplica un `StandardScaler` por bloque ($Z = \frac{x - \mu}{\sigma}$) → vector 2387.
+3. **Inferencia ONNX:** El vector 2387 entra a `shadow_net_sorel_7m_v1.1.onnx` vía `onnxruntime.InferenceSession` (sigmoid incluido → probabilidad).
 4. **Veredicto:** El modelo retorna una probabilidad continua entre `0.0` (Benigno) y `1.0` (Malware).
 
 ---
@@ -100,19 +101,21 @@ El subsistema de Deep Learning abarca componentes de código, artefactos pre-ent
 ### 📌 ¿Qué se usa?
 La arquitectura principal es un **Perceptrón Multicapa (MLP)** o Red Neuronal Feedforward Profunda con topología en "embudo cónico" (*funnel architecture*).
 
-#### Composición del Vector de Entrada (2381 Dimensiones):
+#### Composición del Vector de Entrada (2387 Dimensiones = 2381 EMBER + 6 OVERLAY):
 - **Histograma de Bytes (256 dims):** Frecuencia estadística de bytes `0x00` a `0xFF`.
 - **Entropía de Bytes (256 dims):** Medición de desorden local con ventana deslizante de 2048 bytes.
 - **Strings e IoCs (104 dims):** Patrones de URLs, comandos PowerShell, rutas de registro, claves criptográficas.
 - **Metadatos Generales PE (10 dims):** Tamaños, número de secciones, flags generales.
-- **Cabeceras PE (62 dims):** Campos de COFF Header, Optional Header y Data Directories.
-- **Análisis de Secciones (255 dims):** Permisos RWX, nombres, entropía por sección y discrepancias VirtualSize/RawSize.
-- **Imports IAT (1280 dims):** Feature Hashing con SHA-256 de las funciones importadas.
+- **Cabeceras PE (62 dims):** Categóricos hasheados + 11 numéricos (canónico EMBER v2).
+- **Análisis de Secciones (255 dims):** Permisos RWX, nombres, entropía por sección y discrepancias VirtualSize/RawSize (FeatureHasher).
+- **Imports IAT (1280 dims):** Feature Hashing (murmurhash: 256 librerías + 1024 funciones).
 - **Exports (128 dims):** Feature Hashing de funciones exportadas.
+- **Data Directories (30 dims):** Tamaño + RVA de 15 directorios.
+- **OVERLAY_6:** `slack_ratio`, `slack_bytes_log`, `file_size_log`, `imports_log`, `has_cert`, `stub_overlay_pattern` (derivadas del bloque General, escaladas aparte).
 
 #### Estructura de la Red Neuronal:
 ```text
-Entrada (2381 neuronas - Vector Z-Score)
+Entrada (2387 neuronas - Vector Z-Score)
    │
    ▼
 [Capa Oculta 1] ── Dense(512) ──► BatchNorm1d ──► ReLU ──► Dropout(p=0.3)
@@ -140,7 +143,7 @@ Entrada (2381 neuronas - Vector Z-Score)
 
 ### ⚙️ ¿Cómo se usa?
 La red procesa la información de forma secuencial hacia adelante (*forward pass*):
-1. Recibe las 2381 entradas escaladas.
+1. Recibe las 2387 entradas escaladas (1 388 801 parámetros).
 2. La **Capa 1** (512 neuronas) extrae combinaciones iniciales de bajo nivel.
 3. La **Capa 2** (256 neuronas) comprime la representación a patrones de nivel medio (ej. combinaciones de imports sospechosos + entropía alta).
 4. La **Capa 3** (128 neuronas) sintetiza las señales en conceptos abstractos de amenaza.
@@ -166,7 +169,7 @@ sequenceDiagram
     alt Firma Maliciosa Detectada
         YARA-->>Risk: Match Cortocircuito (DANGEROUS)
     end
-    Archivo->>ML: Vector 2381-dim → Inferencia
+    Archivo->>ML: Vector 2387-dim → Inferencia
     ML-->>Risk: Score Probabilidad [0.0 - 1.0]
     Archivo->>Overlay: Análisis de bytes fuera de PE
     Overlay-->>Risk: Ratio, Entropía y Payloads Embebidos
@@ -181,7 +184,7 @@ sequenceDiagram
    - **Por qué se usa:** Identifica de forma inmediata familias conocidas de ransomware, spyware o troyanos sin gastar recursos de cómputo adicionales. Si hay un match crítico, puede hacer cortocircuito en el pipeline.
 
 2. **Capa ML / Deep Learning (Inferencia ONNX):**
-   - **Qué hace:** Procesa el vector de 2381 características y genera la probabilidad estadística de maliciosidad.
+   - **Qué hace:** Procesa el vector de 2387 características (2381 EMBER + 6 overlay) y genera la probabilidad estadística de maliciosidad.
    - **Por qué se usa:** Captura la estructura general del archivo y detecta variantes no vistas (*Zero-Day*).
 
 3. **Capa Overlay Analysis (Análisis de Payloads Ocultos):**
@@ -232,4 +235,4 @@ Integración con modelos de lenguaje generativos (*Large Language Models*) basad
 
 ---
 
-> 📝 **Nota sobre Mantenimiento:** Los artefactos del modelo ONNX y el escalador Z-Score se encuentran verificados y congelados en la versión `v1.0.1`. Toda modificación a la arquitectura o reentrenamiento debe registrarse en `models/model_manifest.json`.
+> 📝 **Nota sobre Mantenimiento:** Los artefactos del modelo ONNX y los escaladores Z-Score se encuentran verificados y congelados en la versión `v1.1.0`. Toda modificación a la arquitectura o reentrenamiento debe registrarse en `models/model_manifest.json`.

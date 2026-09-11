@@ -6,6 +6,11 @@
 
 # --- Análisis de PE (Portable Executable) ---
 pefile>=2023.2.7
+# --- Extracción canónica EMBER v2 (LIEF + FeatureHasher) ---
+# Usado por extractors/ember_features.py para producir el vector EMBER_2381
+# idéntico al de entrenamiento (SOREL-20M). No fijar versión exacta todavía;
+# validar primero equivalencia (ver scripts/compare_ember_vs_sorel.py).
+lief>=0.13
 
 # --- Inferencia numérica y ML ---
 numpy>=1.24.0

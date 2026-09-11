@@ -24,18 +24,24 @@ import joblib
 import numpy as np
 import onnxruntime as ort
 
+from core.overlay_features import OVERLAY_FEATURE_NAMES
+from models.features_v1_1 import build_features_2387
+
 logger = logging.getLogger("core.explain.shap")
 
-# Numero de features del vector SOREL-20M (contrato invariante)
-FEATURE_DIM = 2381
+# Numero de features del vector SOREL-20M (contrato invariante del extractor)
+EMBER_FEATURE_DIM = 2381
+# Dimension de entrada del MLP (ShadowNetFeatures_v1.1 = EMBER_2381 + OVERLAY_6)
+MODEL_FEATURE_DIM = 2387
 
 # Timeout para la inferencia SHAP en segundos
 SHAP_TIMEOUT_SECONDS = 30
 
 # Directorio de modelos relativo a la raiz del proyecto
 _HERE = Path(__file__).resolve().parent.parent.parent
-_DEFAULT_MODEL_PATH = _HERE / "models" / "best_model.onnx"
-_DEFAULT_SCALER_PATH = _HERE / "models" / "scaler.pkl"
+_DEFAULT_MODEL_PATH = _HERE / "models" / "shadow_net_sorel_7m_v1.1.onnx"
+_DEFAULT_SCALER_EMBER_PATH = _HERE / "models" / "scaler_ember_v1.1.pkl"
+_DEFAULT_SCALER_OVERLAY_PATH = _HERE / "models" / "scaler_overlay_v1.1.pkl"
 _TEST_SET_PATH = _HERE / "data" / "test_set" / "X_test.npy"
 
 
@@ -48,8 +54,8 @@ def _generate_synthetic_background(n: int = 100) -> np.ndarray:
     El resultado es determinista (seed fijo) para reproducibilidad.
     """
     rng = np.random.default_rng(seed=42)
-    zeros = np.zeros((n // 2, FEATURE_DIM), dtype=np.float32)
-    gaussian = rng.normal(0.0, 0.1, (n - n // 2, FEATURE_DIM)).astype(np.float32)
+    zeros = np.zeros((n // 2, EMBER_FEATURE_DIM), dtype=np.float32)
+    gaussian = rng.normal(0.0, 0.1, (n - n // 2, EMBER_FEATURE_DIM)).astype(np.float32)
     bg = np.vstack([zeros, gaussian])
     return bg
 
@@ -65,12 +71,12 @@ def _load_background(n: int = 100) -> np.ndarray:
         n: Numero de muestras de background.
 
     Returns:
-        Array de shape (n, FEATURE_DIM) en float32.
+        Array de shape (n, EMBER_FEATURE_DIM) en float32.
     """
     if _TEST_SET_PATH.exists():
         try:
             data = np.load(str(_TEST_SET_PATH))
-            if data.ndim == 2 and data.shape[1] == FEATURE_DIM:
+            if data.ndim == 2 and data.shape[1] == EMBER_FEATURE_DIM:
                 idx = np.random.default_rng(42).integers(0, len(data), min(n, len(data)))
                 bg = data[idx].astype(np.float32)
                 logger.info(
@@ -109,9 +115,12 @@ def _build_feature_names() -> List[str]:
     names += [f"section_{i}" for i in range(255)]
     names += [f"imports_{i}" for i in range(1280)]
     names += [f"exports_{i}" for i in range(128)]
-    # Rellenar el resto con nombres genericos hasta FEATURE_DIM
-    remaining = FEATURE_DIM - len(names)
+    # Rellenar el resto con nombres genericos hasta EMBER_FEATURE_DIM
+    remaining = EMBER_FEATURE_DIM - len(names)
     names += [f"feature_{len(names) + i}" for i in range(remaining)]
+    # Bloque OVERLAY_6 (ShadowNetFeatures_v1.1) al final, en el orden canonico
+    names += [f"overlay_{n}" for n in OVERLAY_FEATURE_NAMES]
+    assert len(names) == MODEL_FEATURE_DIM, len(names)
     return names
 
 
@@ -119,40 +128,45 @@ class ShapExplainer:
     """
     SHAP KernelExplainer sobre ONNX Runtime — sin PyTorch.
 
-    Carga best_model.onnx y scaler.pkl una sola vez y expone el metodo
-    explain() para obtener las top-k features con mayor contribucion SHAP.
+    Carga el modelo 2387 (ShadowNetFeatures_v1.1) y sus dos scalers una sola vez y
+    expone el metodo explain() para obtener las top-k features con mayor contribucion SHAP.
 
     Uso:
         explainer = ShapExplainer()
-        result = explainer.explain(feature_vector, top_k=20)
+        result = explainer.explain(feature_vector_ember_2381, top_k=20)
         # result["top_features"] → lista de {feature_idx, feature_name, shap_value}
     """
 
     def __init__(
         self,
         model_path: Optional[Path] = None,
-        scaler_path: Optional[Path] = None,
+        scaler_ember_path: Optional[Path] = None,
+        scaler_overlay_path: Optional[Path] = None,
         background_n: int = 100,
     ):
         """
         Inicializa el explainer cargando modelos y background.
 
         Args:
-            model_path:   Ruta a best_model.onnx. Por defecto usa models/.
-            scaler_path:  Ruta a scaler.pkl. Por defecto usa models/.
-            background_n: Numero de muestras para el background de KernelExplainer.
+            model_path:          Ruta al ONNX 2387. Por defecto usa models/.
+            scaler_ember_path:   Ruta al scaler EMBER (2381). Por defecto usa models/.
+            scaler_overlay_path: Ruta al scaler OVERLAY (6). Por defecto usa models/.
+            background_n:        Numero de muestras para el background de KernelExplainer.
         """
         self.model_path = Path(model_path or _DEFAULT_MODEL_PATH)
-        self.scaler_path = Path(scaler_path or _DEFAULT_SCALER_PATH)
+        self.scaler_ember_path = Path(scaler_ember_path or _DEFAULT_SCALER_EMBER_PATH)
+        self.scaler_overlay_path = Path(scaler_overlay_path or _DEFAULT_SCALER_OVERLAY_PATH)
 
         logger.info(
-            "Inicializando ShapExplainer: model=%s scaler=%s background_n=%d",
+            "Inicializando ShapExplainer: model=%s scaler_ember=%s scaler_overlay=%s background_n=%d",
             self.model_path.name,
-            self.scaler_path.name,
+            self.scaler_ember_path.name,
+            self.scaler_overlay_path.name,
             background_n,
         )
 
-        self.scaler = joblib.load(str(self.scaler_path))
+        self.scaler_ember = joblib.load(str(self.scaler_ember_path))
+        self.scaler_overlay = joblib.load(str(self.scaler_overlay_path))
         self.session = ort.InferenceSession(
             str(self.model_path), providers=["CPUExecutionProvider"]
         )
@@ -171,11 +185,11 @@ class ShapExplainer:
         """
         Funcion de prediccion compatible con shap.KernelExplainer.
 
-        El scaler ya fue aplicado externamente antes de llamar a explain(),
-        por lo que este metodo solo hace inferencia ONNX pura.
+        Recibe el vector 2387 ya construido (EMBER escalado | OVERLAY escalado)
+        y ejecuta solo la inferencia ONNX.
 
         Args:
-            X: Array de shape (n, 2381) en float32 ya escalado.
+            X: Array de shape (n, 2387) en float32 ya escalado.
 
         Returns:
             Array de scores de shape (n,) en float32.
@@ -217,15 +231,20 @@ class ShapExplainer:
             logger.warning("shap no instalado — retornando shap_not_installed")
             return {"error": "shap_not_installed", "top_features": []}
 
-        # Normalizar shape del vector de entrada
-        feat = np.asarray(features, dtype=np.float32).reshape(1, FEATURE_DIM)
+        # Normalizar shape del vector de entrada (EMBER-2381 del extractor)
+        feat = np.asarray(features, dtype=np.float32).reshape(1, EMBER_FEATURE_DIM)
 
-        # Escalar el vector y el background con el mismo scaler de produccion
+        # Construir el vector 2387 = [EMBER escalado | OVERLAY escalado] para el
+        # vector y para el background, con los mismos scalers de produccion.
         import warnings
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            scaled_feat = self.scaler.transform(feat).astype(np.float32)
-            scaled_bg = self.scaler.transform(self.background).astype(np.float32)
+            scaled_feat = build_features_2387(feat, self.scaler_ember, self.scaler_overlay)
+            scaled_bg = build_features_2387(
+                np.asarray(self.background, dtype=np.float32),
+                self.scaler_ember,
+                self.scaler_overlay,
+            )
 
         model_score = float(self._predict_fn(scaled_feat)[0])
 

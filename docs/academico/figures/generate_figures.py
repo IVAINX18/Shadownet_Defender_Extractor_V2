@@ -30,17 +30,17 @@ def save(fig, name):
 # ─────────────────────────────────────────────────────────────────────────────
 def fig_comparativa_ml_vs_hibrido():
     samples = ['sample1.exe\n(overlay 98.7%)', 'sample2.exe\n(.NET ofuscado)', 'eicar.txt\n(no-PE)', 'procexp64.exe\n(legítimo)']
-    ml_scores = [0.0000, 0.0000, 0.0001, 1.0000]
-    op_status = ['DANGEROUS', 'CLEAN', 'CLEAN', 'UNKNOWN']
-    risk_scores = [105, 1, 20, 0]
-    colors_op = ['#d32f2f', '#388e3c', '#388e3c', '#9e9e9e']
+    ml_scores = [0.0913, 0.4660, 0.0040, 0.0101]
+    op_status = ['SUSPICIOUS', 'SUSPICIOUS', 'CLEAN', 'SUSPICIOUS']
+    risk_scores = [120, 6, 20, 35]
+    colors_op = ['#f57c00', '#f57c00', '#388e3c', '#f57c00']
 
     fig, axes = plt.subplots(1, 2, figsize=(13, 5))
-    fig.suptitle('ShadowNet Defender — ML score vs. Operational Status (datos reales, 2026-08-18)',
+    fig.suptitle('ShadowNet Defender — ML score vs. Operational Status (datos reales, 2026-09-11)',
                  fontsize=11, fontweight='bold')
 
     # ML Score
-    bars1 = axes[0].bar(samples, ml_scores, color=['#1565c0', '#1565c0', '#1565c0', '#d32f2f'], edgecolor='black', linewidth=0.8)
+    bars1 = axes[0].bar(samples, ml_scores, color=['#1565c0', '#1565c0', '#1565c0', '#1565c0'], edgecolor='black', linewidth=0.8)
     axes[0].axhline(0.5, color='red', linestyle='--', linewidth=1.5, label='Umbral ML (0.5)')
     axes[0].set_title('Score del Modelo ML', fontweight='bold')
     axes[0].set_ylabel('ML Score (0.0 – 1.0)')
@@ -50,11 +50,11 @@ def fig_comparativa_ml_vs_hibrido():
         axes[0].text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.02,
                      f'{val:.4f}', ha='center', va='bottom', fontsize=9)
 
-    # Risk Score + Operational Status
+    # Heuristic Score + Operational Status (medido 2026-09-11)
     bars2 = axes[1].bar(samples, risk_scores, color=colors_op, edgecolor='black', linewidth=0.8)
     axes[1].axhline(70, color='orange', linestyle='--', linewidth=1.2, label='Umbral CRITICAL (≥70)')
-    axes[1].set_title('Risk Score del Sistema Multicapa', fontweight='bold')
-    axes[1].set_ylabel('Risk Score')
+    axes[1].set_title('Heuristic Score del Sistema Multicapa', fontweight='bold')
+    axes[1].set_ylabel('Heuristic Score')
     axes[1].set_ylim(0, 130)
     axes[1].legend()
     for bar, val, op in zip(bars2, risk_scores, op_status):
@@ -62,7 +62,7 @@ def fig_comparativa_ml_vs_hibrido():
                      f'{val}\n({op})', ha='center', va='bottom', fontsize=8.5, fontweight='bold')
 
     fig.text(0.5, -0.02,
-             'Nota: ML score de procexp64.exe = 1.0 por YARA match, no por inferencia neuronal.',
+             'Nota: ML score de procexp64.exe = 0.0101 (FP del modelo anterior corregido); YARA degradado por whitelist.',
              ha='center', fontsize=8, style='italic', color='gray')
 
     plt.tight_layout()
@@ -156,7 +156,7 @@ def fig_resultados_tests():
                     str(int(bar.get_height())), ha='center', va='bottom', fontsize=9)
 
     # Tasa global
-    ax.text(0.98, 0.95, f'Tasa éxito: 155/158 = 98.1%\n(excl. skipped)',
+    ax.text(0.98, 0.95, f'Tasa éxito: 294/321\n(27 skipped)',
             transform=ax.transAxes, ha='right', va='top', fontsize=10,
             bbox=dict(boxstyle='round', facecolor='#e8f5e9', alpha=0.8))
 
@@ -176,13 +176,13 @@ def fig_arquitectura_multicapa():
     layers = [
         ('Entrada: Binario PE / EXE / DLL', '#546e7a', 13.0),
         ('Fase 1 — YARA Scanner\n4 archivos de reglas | Firmas deterministas', '#b71c1c', 11.5),
-        ('Fase 2-3 — Feature Extractor + ML/ONNX\n2381 features | Red neuronal 512→256→128→1', '#1565c0', 10.0),
+        ('Fase 2-3 — Feature Extractor + ML/ONNX\n2387 features (2381 + 6) | Red neuronal 512→256→128→1', '#1565c0', 10.0),
         ('Fase 4 — Overlay Analysis\nEntropía | Embedded PE | Ratio', '#e65100', 8.5),
         ('Fase 5 — DotNet Analysis\nCLR Header | Ofuscadores | Assemblies embebidos', '#4a148c', 7.0),
         ('Fase 6 — IL Behavioral Analysis\nTokens CLR: M2-M15 | Evidencias forenses', '#1b5e20', 5.5),
         ('Fase 7 — Risk Engine\nCorrelación multicapa → operational_status', '#37474f', 4.0),
         ('ScanResult: label + score + operational_status\n+ risk_level + risk_score + evidencias', '#263238', 2.5),
-        ('Backend → Supabase + n8n + Ollama LLM', '#37474f', 1.0),
+        ('Backend → Supabase + LLM cloud', '#37474f', 1.0),
     ]
 
     for label, color, y in layers:
@@ -200,7 +200,7 @@ def fig_arquitectura_multicapa():
                         arrowprops=dict(arrowstyle='->', color='black', lw=1.5))
 
     # Anotación del hallazgo
-    ax.annotate('H-01: ML=BENIGN\nHeurística=DANGEROUS',
+    ax.annotate('H-01: ML=SUSPICIOUS (0.09)\nHeurística=CRITICAL',
                 xy=(9, 10.0 - 0.05), xytext=(9.3, 10.0),
                 fontsize=7.5, color='#d32f2f', fontweight='bold',
                 ha='left',
@@ -292,8 +292,8 @@ def fig_latencia():
 def fig_roc_representativa():
     """
     ADVERTENCIA: Esta figura usa la curva ROC del test set SINTÉTICO disponible
-    en el repositorio. Los valores AUC=1.0 corresponden al test set sintético
-    y perfectamente separable, NO a evaluación sobre malware real.
+    en el repositorio con el modelo legacy v1.0.1 (modelos/legacy_2381/).
+    NO corresponde al modelo vigente v1.1.0 ni a evaluación sobre malware real.
     Se incluye únicamente para ilustrar la metodología de evaluación,
     NO para reportar rendimiento del sistema.
     """
@@ -309,7 +309,7 @@ def fig_roc_representativa():
     # y_inv representa la convención del modelo: score alto = benign
     y_inv = 1 - y  # etiquetas: 0=malware, 1=benign → convención modelo
 
-    model_path = os.path.join(base, 'models/best_model.onnx')
+    model_path = os.path.join(base, 'models/legacy_2381/best_model.onnx')
     sess = ort.InferenceSession(model_path)
     input_name = sess.get_inputs()[0].name
     output_name = sess.get_outputs()[0].name

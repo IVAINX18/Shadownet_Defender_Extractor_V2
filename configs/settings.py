@@ -6,11 +6,16 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Model Paths
 MODELS_DIR = BASE_DIR / "models"
-MODEL_PATH = MODELS_DIR / "best_model.onnx"
-SCALER_PATH = MODELS_DIR / "scaler.pkl"
+MODEL_PATH = MODELS_DIR / "shadow_net_sorel_7m_v1.1.onnx"
+SCALER_EMBER_PATH = MODELS_DIR / "scaler_ember_v1.1.pkl"
+SCALER_OVERLAY_PATH = MODELS_DIR / "scaler_overlay_v1.1.pkl"
 
 # Feature Configuration
+# - FEATURE_DIMENSION: contrato del EXTRACTOR (vector EMBER-2381), invariable.
+# - MODEL_FEATURE_DIMENSION: entrada del MLP (ShadowNetFeatures_v1.1 = EMBER + OVERLAY = 2387).
 FEATURE_DIMENSION = 2381
+MODEL_FEATURE_DIMENSION = 2387
+OVERLAY_FEATURE_DIMENSION = 6
 
 # Thresholds
 MALWARE_THRESHOLD = 0.5
@@ -31,9 +36,9 @@ EXTRACTOR_TIMEOUT_SECONDS = int(os.getenv("EXTRACTOR_TIMEOUT_SECONDS", "15"))
 
 
 def validate_paths(logger) -> None:
-    """Valida que MODEL_PATH y SCALER_PATH existan en disco.
+    """Valida que MODEL_PATH, SCALER_EMBER_PATH y SCALER_OVERLAY_PATH existan en disco.
     Registra WARNING en logs si no existen."""
-    for p in (MODEL_PATH, SCALER_PATH):
+    for p in (MODEL_PATH, SCALER_EMBER_PATH, SCALER_OVERLAY_PATH):
         if not p.exists():
             logger.warning("Archivo requerido no encontrado: %s", p)
 

@@ -55,11 +55,11 @@ def test_data():
 @pytest.fixture(scope="module")
 def loaded_engine():
     """Carga el motor con modelo ONNX real."""
-    from configs.settings import MODEL_PATH, SCALER_PATH
+    from configs.settings import MODEL_PATH, SCALER_EMBER_PATH, SCALER_OVERLAY_PATH
     if not MODEL_PATH.exists():
         pytest.skip(f"Modelo ONNX no encontrado: {MODEL_PATH}")
-    if not SCALER_PATH.exists():
-        pytest.skip(f"Scaler no encontrado: {SCALER_PATH}")
+    if not SCALER_EMBER_PATH.exists() or not SCALER_OVERLAY_PATH.exists():
+        pytest.skip(f"Scalers no encontrados: {SCALER_EMBER_PATH}, {SCALER_OVERLAY_PATH}")
 
     try:
         from core.engine import ShadowNetEngine
@@ -97,17 +97,24 @@ class TestPipelineAccuracy:
         except ImportError as e:
             pytest.skip(f"Dependencia no instalada: {e}")
 
-        from configs.settings import MODEL_PATH, SCALER_PATH, FEATURE_DIMENSION
+        from configs.settings import (
+            MODEL_PATH,
+            SCALER_EMBER_PATH,
+            SCALER_OVERLAY_PATH,
+            FEATURE_DIMENSION,
+        )
+        from models.features_v1_1 import build_features_2387
 
         if not MODEL_PATH.exists():
             pytest.skip(f"Modelo ONNX no encontrado: {MODEL_PATH}")
-        if not SCALER_PATH.exists():
-            pytest.skip(f"Scaler no encontrado: {SCALER_PATH}")
+        if not SCALER_EMBER_PATH.exists() or not SCALER_OVERLAY_PATH.exists():
+            pytest.skip(f"Scalers no encontrados: {SCALER_EMBER_PATH}, {SCALER_OVERLAY_PATH}")
 
-        # Cargar scaler y sesión ONNX
+        # Cargar scalers y sesión ONNX
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            scaler = joblib.load(str(SCALER_PATH))
+            scaler_ember = joblib.load(str(SCALER_EMBER_PATH))
+            scaler_overlay = joblib.load(str(SCALER_OVERLAY_PATH))
         session = ort.InferenceSession(str(MODEL_PATH))
         input_name = session.get_inputs()[0].name
 
@@ -131,7 +138,7 @@ class TestPipelineAccuracy:
 
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            X_scaled = scaler.transform(X).astype(np.float32)
+            X_scaled = build_features_2387(X, scaler_ember, scaler_overlay).astype(np.float32)
 
         proba = session.run(None, {input_name: X_scaled})[0].flatten()
         if proba.max() > 1.0 or proba.min() < 0.0:

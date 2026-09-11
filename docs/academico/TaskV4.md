@@ -11,7 +11,7 @@
 
 1. **Nada se cierra sin evidencia ejecutable** — cada tarea termina con test `pytest` verde o ejecución real logueada (como en `11_analisis_sample1.md`).
 2. **Fix P0/P1 antes de feature nueva** — no integrar BehavioralShield ni SHAP hasta corregir n8n, JWT y estado `UNKNOWN`.
-3. **No tocar `2381 dims` ni `scaler.pkl`** — contrato duro; cualquier cambio en extractor/modelo requiere actualizar simultáneamente `models/scaler.pkl` + `models/best_model.onnx` + tests de dimensiones.
+3. **Contrato de features vigente** — el extractor entrega EMBER 2381 fijo y el modelo recibe 2387 (`ShadowNetFeatures_v1.1` = EMBER + OVERLAY_6); cualquier cambio en extractor/modelo requiere actualizar simultáneamente `models/scaler_ember_v1.1.pkl` + `models/scaler_overlay_v1.1.pkl` + `models/shadow_net_sorel_7m_v1.1.onnx` + tests de dimensiones (modelo anterior en `models/legacy_2381/`).
 4. **Fail-secure por defecto** — ante falta de config (Supabase/Ollama/n8n) el sistema debe degradar con `401/503` y fallback, nunca `500` ni silencio.
 
 ---
@@ -146,7 +146,7 @@ Dependencias críticas: `T-01` y `T-03` comparten `core/heuristics/` + `core/int
 - **Origen:** R-03, R-04, CE-03, `test_no_imports_raises_score`
 - **Archivos:** `extractors/*` (imports 1280 buckets), `core/heuristics/*`, `tests/test_extractors.py`
 - **Acción:**
-  1. Documentar colisión 1280 buckets como limitación conocida en `13_limitaciones.md`; evaluar pasar a 2048 buckets solo si se reentrena y regenera `scaler.pkl` + `best_model.onnx` (no hacer sin T-13).
+  1. Documentar colisión 1280 buckets como limitación conocida en `13_limitaciones.md`; evaluar pasar a 2048 buckets solo si se reentrena y regenera modelo + scalers v1.1 (no hacer sin T-13).
   2. Reforzar `CE-03` (loader sin imports): Risk ya eleva score (`test_no_imports_raises_score` PASS) — añadir correlación con `executable_sections==1 && num_imports==0 → risk +=` y test `test_shellcode_loader_is_dangerous`.
   3. Añadir nota R-03 en docs: artefactos ONNX/scaler deben considerarse secreto; si se exponen, el modelo es atacable.
 - **Criterios:** loader sintético sin imports es DANGEROUS; docs actualizados.
@@ -203,9 +203,9 @@ Dependencias críticas: `T-01` y `T-03` comparten `core/heuristics/` + `core/int
 - **Archivos:** `data/test_set/` (reemplazar o complementar), `docs/academico/07_metricas_y_resultados.md`, `evaluation/*`, `Model_Collab/` (referencia)
 - **Acción:**
   1. Construir `data/eval_real/` con ≥1000 malware + ≥1000 benignos con ground truth ≥5 motores AV (VirusTotal) o sandbox. No incluir en git si hay riesgo legal — documentar proceso de adquisición en `07_metricas`.
-  2. Recalcular compatibilidad con `scaler.pkl` — verificar `mean≈0, std≈1` post-scaling sobre corpus real (a diferencia de `mean=21.73, std=112.1` del sintético).
+  2. Recalcular compatibilidad con el scaler EMBER v1.1 — verificar `mean≈0, std≈1` post-scaling sobre corpus real (a diferencia de `mean=21.73, std=114.74` del sintético).
   3. Calcular y reportar: Accuracy, Precision, Recall, F1, AUC-ROC, FPR@TPR=90%, TPR@FPR=1% para solo-ML y para híbrido.
-  4. Comparar métricas declaradas `07_metricas` (accuracy 0.9815 sobre 765K híbrido) vs métricas de campo — documentar gap de generalización (padding de ceros 33→2381).
+  4. Comparar métricas `07_metricas` (accuracy 0.9708 sobre validación temporal 700k v1.1.0) vs métricas de campo — documentar gap de generalización (el modelo v1.1.0 no usa padding).
   5. Marcar `data/test_set/X_test.npy` como `SINTETICO — no usar para métricas` en `figures/fig7*`.
 - **Criterios:** `07_metricas_y_resultados.md` contiene tabla con métricas de campo verificables; `pytest tests/integration/test_pipeline_e2e.py::test_accuracy_above_threshold` pasa sobre `eval_real` o es reemplazado por test con umbral realista.
 - **Verificación:** `python evaluation/evaluate_real_corpus.py --corpus data/eval_real/` produce `metrics.json` con AUC>0.90 esperado.

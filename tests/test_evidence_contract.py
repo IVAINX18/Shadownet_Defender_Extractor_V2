@@ -224,10 +224,11 @@ def test_no_last_writer_wins():
     if not sample.exists():
         pytest.skip("sample2.exe no existe")
     result = engine.scan_file(str(sample))
-    # ML score 0.0 debe estar preservado en todas partes
-    assert result["score"] == 0.0
-    assert result["final_verdict"]["ml_score_raw"] == 0.0
-    assert result["correlation"]["ml_score_preserved"] == 0.0
+    # El ML score debe estar preservado en todas partes (mismo valor en las
+    # tres ubicaciones, sin importar su magnitud; antes era 0.0 por saturacion).
+    score = result["score"]
+    assert score == pytest.approx(result["final_verdict"]["ml_score_raw"], abs=1e-4)
+    assert score == pytest.approx(result["correlation"]["ml_score_preserved"], abs=1e-4)
     # PE static evidence debe existir y ser suspicious (no borrada por dotnet)
     pe_ev = next((e for e in result["evidences"] if e["source"] == "pe_static"), None)
     assert pe_ev is not None
@@ -269,7 +270,7 @@ def test_onnx_score_intact():
     from core.engine import ShadowNetEngine
     from models.inference import ShadowNetModel
     from extractors.extractor import PEFeatureExtractor
-    from configs.settings import MODEL_PATH, SCALER_PATH
+    from configs.settings import MODEL_PATH, SCALER_EMBER_PATH, SCALER_OVERLAY_PATH
 
     sample = Path("samples/sample2.exe")
     if not sample.exists():
@@ -277,7 +278,7 @@ def test_onnx_score_intact():
 
     # Inferencia directa
     extractor = PEFeatureExtractor()
-    model = ShadowNetModel(MODEL_PATH, SCALER_PATH)
+    model = ShadowNetModel(MODEL_PATH, SCALER_EMBER_PATH, SCALER_OVERLAY_PATH)
     features = extractor.extract(str(sample))
     direct_score = model.predict(features)
 

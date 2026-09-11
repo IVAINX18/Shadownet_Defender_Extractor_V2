@@ -43,8 +43,9 @@ import numpy as np
 
 CORPUS_DIR = _PROJECT_ROOT / "data" / "eval_real"
 MANIFEST_FNAME = "manifest.csv"
-SCALER_PATH = _PROJECT_ROOT / "models" / "scaler.pkl"
-MODEL_PATH = _PROJECT_ROOT / "models" / "best_model.onnx"
+SCALER_EMBER_PATH = _PROJECT_ROOT / "models" / "scaler_ember_v1.1.pkl"
+SCALER_OVERLAY_PATH = _PROJECT_ROOT / "models" / "scaler_overlay_v1.1.pkl"
+MODEL_PATH = _PROJECT_ROOT / "models" / "shadow_net_sorel_7m_v1.1.onnx"
 METRICS_OUT = _PROJECT_ROOT / "evaluation" / "metrics.json"
 DQR_PATH = _PROJECT_ROOT / "evaluation" / "DATA_QUALITY_REPORT.md"
 FEATURE_DIM = 2381
@@ -216,8 +217,10 @@ def evaluate(corpus_dir: Path) -> dict:
 
     if not manifest_path.exists():
         raise FileNotFoundError(f"Manifest no encontrado: {manifest_path}")
-    if not SCALER_PATH.exists():
-        raise FileNotFoundError(f"Scaler no encontrado: {SCALER_PATH}")
+    if not SCALER_EMBER_PATH.exists() or not SCALER_OVERLAY_PATH.exists():
+        raise FileNotFoundError(
+            f"Scalers no encontrados: {SCALER_EMBER_PATH}, {SCALER_OVERLAY_PATH}"
+        )
     if not MODEL_PATH.exists():
         raise FileNotFoundError(f"Modelo ONNX no encontrado: {MODEL_PATH}")
 
@@ -238,12 +241,14 @@ def evaluate(corpus_dir: Path) -> dict:
     N = len(y)
     print(f"       Muestras válidas: {N}  (malware={y.sum()}, benign={N - y.sum()})")
 
-    # 3. Scaler drift
+    # 3. Scaler drift (vector 2387 = EMBER escalado | OVERLAY escalado)
     import joblib
-    scaler = joblib.load(str(SCALER_PATH))
+    from models.features_v1_1 import build_features_2387
+    scaler_ember = joblib.load(str(SCALER_EMBER_PATH))
+    scaler_overlay = joblib.load(str(SCALER_OVERLAY_PATH))
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        X_scaled = scaler.transform(X)
+        X_scaled = build_features_2387(X, scaler_ember, scaler_overlay)
     drift = {
         "mean_post": float(np.mean(X_scaled)),
         "std_post": float(np.std(X_scaled)),

@@ -12,7 +12,7 @@ Un sistema de deteccion de malware que produce solo un score numerico no es dire
 
 1. **XAI Forense** (basado en evidencias deterministas): tokens CLR, strings sospechosos, overlay metrics, YARA rules.
 2. **XAI Narrativo** (basado en LLM): la cascada cloud Groq/Gemini (con fallback Template offline) convierte las evidencias forenses en una explicacion en lenguaje natural, con validacion de coherencia (F2 T-10).
-3. **XAI SHAP** (F3 T-12): KernelExplainer sobre ONNX Runtime expone las top-20 features del vector de 2381 dimensiones que mas contribuyeron al score ML.
+3. **XAI SHAP** (F3 T-12): KernelExplainer sobre ONNX Runtime expone las top-20 features del vector de 2387 dimensiones (2381 EMBER + 6 overlay) que mas contribuyeron al score ML.
 
 ---
 
@@ -220,11 +220,11 @@ GET /explain/shap?file_path=/ruta/al/archivo.exe&top_k=20
 _validate_file_path()          # Rechaza path traversal y archivos inexistentes
         │
         ▼
-PEFeatureExtractor.extract()   # Vector 2381 dims (mismo que en inferencia ONNX)
+PEFeatureExtractor.extract()   # Vector 2381 dims (se expande a 2387 en inferencia ONNX)
         │
         ▼
 ShapExplainer.explain()        # core/explain/shap_explainer.py
-    scaler.transform()         # StandardScaler (mismo que en inferencia)
+    build_features_2387()      # Scalers EMBER + OVERLAY (igual que en inferencia)
     KernelExplainer(background=100 muestras, predict_fn=onnx_session)
     shap_values(nsamples=100)  # Timeout de 30s con ThreadPoolExecutor
         │
@@ -264,7 +264,7 @@ ShapExplainer.explain()        # core/explain/shap_explainer.py
 
 1. **No-determinismo**: KernelExplainer con `nsamples=100` produce resultados ligeramente distintos entre ejecuciones por el muestreo Monte Carlo. Las contribuciones absolutas son estables; las relativas pueden variar en features con SHAP cercano a 0.
 
-2. **Latencia**: con `nsamples=100`, la inferencia tarda entre 10-25s en CPU para el vector de 2381 dims. El endpoint tiene un timeout de 30s; si se supera, retorna `{"error": "shap_timeout", "top_features": []}`.
+2. **Latencia**: con `nsamples=100`, la inferencia tarda entre 10-25s en CPU para el vector de 2387 dims. El endpoint tiene un timeout de 30s; si se supera, retorna `{"error": "shap_timeout", "top_features": []}`.
 
 3. **Background sintetico**: si `data/test_set/X_test.npy` no esta disponible, se usa un background sintetico (ceros + gaussiano seed=42). Las contribuciones SHAP son validas pero relativas al background sintetico, no a la distribucion real de entrenamiento.
 

@@ -12,7 +12,7 @@
 |---------|------------|----------------------|-------------|
 | `data/test_set/X_test.npy` (1000 muestras) | ✅ | ❌ | Sintético, incompatible con scaler de producción |
 | `samples/` (archivos PE) | ✅ | Parcial | Sin ground truth externo verificado |
-| SOREL-20M (datos de entrenamiento) | ❌ | — | No incluido en repositorio (muestra de 5M no conservada; ver notebook en `Model_Collab/`) |
+| SOREL-20M (datos de entrenamiento) | ❌ | — | No incluido en repositorio (selección 7M seed 42 documentada en `Model_Collab/Kaggle-MLP-PE/v5/`; vectores en el npz público de SOREL-20M) |
 | Datos de campo reales | ❌ | — | No disponibles |
 
 ---
@@ -23,162 +23,127 @@
 
 **Condición**: `data/test_set/X_test.npy`, 1000 muestras (500 benign, 500 malware)
 
-El test set contiene features en rango [0, 1]. El `scaler.pkl` de producción fue ajustado sobre datos con distribuciones radicalmente diferentes:
+El test set contiene features en rango [0, 1]. El scaler EMBER de producción fue ajustado sobre datos con distribuciones radicalmente diferentes:
 - Media post-escalado: 21.73 (esperado: ~0)
-- Desviación post-escalado: 112.1 (esperado: ~1)
+- Desviación post-escalado: 114.74 (esperado: ~1)
 
-Al aplicar el scaler del pipeline de producción sobre el test set, el modelo produce score=0.0000 para el 100% de las muestras.
-
-Al omitir el scaler (features directamente al modelo ONNX), el modelo produce scores separables pero con AUC=0.0 con etiquetas convencionales y AUC=1.0 con etiquetas invertidas. Esto confirma que el test set es **sintético con etiquetas opuestas a la convención del modelo** y **perfectamente separable** — no representativo de datos reales.
+Al aplicar el pipeline de producción sobre el test set, el modelo produce score=0.0000 para el 100% de las muestras, con AUC=0.50 tanto con etiquetas convencionales como invertidas. Esto confirma que el test set es **sintético y no informativo** — no representativo de datos reales.
 
 **Conclusión**: Las métricas de ML sobre `data/test_set/` no son válidas para reportar en un artículo científico.
 
 ---
 
-## Métricas de entrenamiento — RECUPERADAS del notebook original (2026-08-25)
+## Métricas de entrenamiento — modelo v1.1.0 vigente (Fase 5 v5)
 
-> **Fuente**: `Model_Collab/ShadowNet Defender - v3.0.ipynb`, notebook con
-> outputs ejecutados del entrenamiento original (julio 2025). Los artefactos
-> resultantes (`best_model.pth`, `scaler.pkl`) son los mismos desplegados en
-> producción (`models/best_model.onnx`, `models/scaler.pkl`). Estas métricas
-> **sí corresponden al modelo en producción**, a diferencia de las métricas
-> declaradas en documentación (sección siguiente), que nunca fueron reproducidas.
+> **Fuente**: `Model_Collab/Kaggle-MLP-PE/v5/metrics/` (métricas y metadata generadas
+> por el entrenamiento; artefactos desplegados en `models/` y verificados en
+> `models/model_manifest.json`). Estas métricas **corresponden al modelo en producción**.
 
 ### Configuración del entrenamiento
 
 | Parámetro | Valor |
 |-----------|-------|
-| Dataset híbrido | 100K registros originales + 5,000,000 muestra SOREL-20M = 5,100,000 |
-| Características | 2,381 (dataset original rellenado con padding de ceros: 33 → 2381) |
-| Distribución de clases | 59.7% malware / 40.3% benigno |
-| División | 70/15/15 estratificado (Train 3,572,040 · Val 762,960 · Test 765,000) |
-| Arquitectura | MLP 2381 → 512 → 256 → 128 → 1 (BatchNorm + ReLU + Dropout 0.3/0.2/0.1) |
-| Parámetros | 1,385,729 |
-| Pérdida / Optimizador | BCELoss · Adam (lr=0.001, weight_decay=1e-5) |
-| Scheduler | ReduceLROnPlateau (patience=3, factor=0.5) |
-| Early stopping | patience=5; detenido en epoch 14; mejor val loss = 0.0523 (epoch 9) |
-| Dispositivo | CPU |
+| Dataset | SOREL-20M, selección 7M seed 42 (4 187 321 malware / 2 812 679 benignos) |
+| Características | 2,387 (`ShadowNetFeatures_v1.1` = EMBER_2381 + OVERLAY_6) |
+| División | Temporal 90/10 (Train 6,300,000 · Val 700,000) |
+| Arquitectura | MLP 2387 → 512 → 256 → 128 → 1 (BatchNorm + ReLU + Dropout 0.3/0.2/0.1) |
+| Parámetros | 1,388,801 |
+| Pérdida / Optimizador | `BCEWithLogitsLoss` · Adam (lr=0.001) |
+| Scheduler | Ninguno; 2 épocas, batch 8192 |
+| Dispositivo | GPU Tesla P100 (torch 2.4.1+cu121) |
 
-### Métricas sobre el conjunto de test (765,000 muestras)
+### Métricas sobre validación temporal (700,000 muestras, threshold 0.5)
 
 | Métrica | Valor |
 |---------|-------|
-| Accuracy | 0.9815 (98.15%) |
-| Precision | 0.9870 (98.70%) |
-| Recall (TPR) | 0.9820 (98.20%) |
-| F1-Score | 0.9845 (98.45%) |
-| Specificity (TNR) | 0.9808 (98.08%) |
+| Accuracy | 0.9708 (97.08%) |
+| Precision | 0.9435 (94.35%) |
+| Recall (TPR) | 0.9652 (96.52%) |
+| F1-Score | 0.9542 (95.42%) |
+| ROC-AUC | 0.9956 |
+| PR-AUC | 0.9927 |
 
 **Matriz de confusión**:
 
 | | Pred. Malware | Pred. Benigno |
 |---|---|---|
-| **Real Malware** | TP = 448,132 | FN = 8,204 |
-| **Real Benigno** | FP = 5,918 | TN = 302,746 |
-
-**Derivadas**: FPR ≈ 1.88% · FNR ≈ 1.80%
+| **Real Malware** | TP = 213,019 | FN = 7,690 |
+| **Real Benigno** | FP = 12,766 | TN = 466,525 |
 
 ### Alcance y validez de estas métricas
 
-Estas métricas son válidas y verificables, pero deben interpretarse con sus límites:
+1. **Distribución evaluada**: validación temporal (10% más reciente del split TRAIN). No mide generalización a dominios nuevos ni sustituye un corpus de campo (ver experimentos faltantes).
+2. **Sin padding artificial**: a diferencia del modelo anterior, no hay muestras rellenadas con ceros.
+3. **Convergencia sana**: `train_loss` 0.1105 → 0.0767, `val_loss` 0.0918 → 0.0864, sin sobreajuste.
 
-1. **Distribución evaluada**: el test set proviene del mismo split aleatorio del dataset híbrido de entrenamiento. No mide generalización a dominios nuevos (familias emergentes, packers no vistos, software legítimo moderno).
-2. **Padding artificial**: las 100K muestras del dataset original fueron rellenadas con 2,348 columnas de ceros para igualar la dimensionalidad de SOREL. El modelo puede explotar este patrón como atajo discriminativo.
-3. **Overflow numérico — solo en logs (corregido 2026-08-25)**: los logs del notebook registran `RuntimeWarning: overflow` con media pre-scaling ≈ 5.02e9 y **std = inf**. La auditoría posterior de `models/scaler.pkl` confirmó que las estadísticas **por columna almacenadas están intactas** (0 inf, 0 NaN); el overflow afectó únicamente al cálculo agregado para impresión. Ver L-05a en `13_limitaciones.md`.
-4. **Val loss inestable** durante el entrenamiento (oscilaciones 0.05 → 0.83 entre epochs consecutivos): consistente con batch size grande + BatchNorm.
-
-**Conclusión**: Las métricas pueden reportarse en el artículo como *"rendimiento del modelo sobre su distribución de evaluación híbrida (SOREL-20M + dataset sintético balanceado)"*, citando el notebook como evidencia reproducible. No sustituyen la necesidad de un corpus de evaluación de campo (ver experimentos faltantes).
+> **Modelo anterior v1.0.1 (histórico, respaldado en `models/legacy_2381/`)**: MLP 2381, 1,385,729 parámetros, entrenado sobre 5.1M (5M SOREL + 100K con padding 33→2381), `BCELoss`, `ReduceLROnPlateau`, early stopping en época 14. Métricas recuperadas de su notebook: accuracy 0.9815, F1 0.9845 sobre su test híbrido de 765k. Se conservan como registro, no como métricas vigentes.
 
 ---
 
-## Métricas declaradas en el proyecto (no reproducidas)
+## Métricas declaradas en el proyecto (medidas en validación v1.1.0)
 
-Las siguientes métricas están documentadas en `DOCUMENTACION_TECNICA_INTEGRAL.md` y el PRD del proyecto. **No fueron reproducidas experimentalmente** porque los datos de entrenamiento/evaluación no están disponibles en el repositorio:
+Las siguientes métricas están respaldadas por los artefactos de validación en `Model_Collab/Kaggle-MLP-PE/v5/metrics/`:
 
-| Métrica | Valor declarado | Fuente |
-|---------|-----------------|--------|
-| AUC-ROC | 0.985 | Documentación del proyecto |
+| Métrica | Valor medido | Fuente |
+|---------|--------------|--------|
+| AUC-ROC | 0.9956 | Validación temporal 700k |
+| AUC-PR | 0.9927 | Validación temporal 700k |
 | FPR @ TPR=90% | No especificado | — |
 | TPR @ FPR=1% | No especificado | — |
 | Latencia inferencia ONNX | ~15 ms | Documentación del proyecto |
 | Latencia total E2E | ~400–500 ms | Documentación del proyecto |
 
-> **IMPORTANTE**: Estas métricas NO pueden presentarse en un artículo científico sin el conjunto de evaluación que las respalda.
+> **IMPORTANTE**: Los puntos operativos (FPR@TPR, TPR@FPR) requieren corpus de campo y no se reportan valores no medidos.
 
 ---
 
 ## Métricas del sistema multicapa — CALCULADAS sobre samples reales
 
-Ejecuciones reales del pipeline completo (2026-08-18):
+Ejecuciones reales del pipeline completo con el modelo v1.1.0 (2026-09-11):
 
 ### Tabla de resultados por archivo
 
 | Archivo | Tamaño | ML score | ML label | Operational Status | Risk Level | YARA | Tiempo |
 |---------|--------|----------|----------|--------------------|------------|------|--------|
-| `sample1.exe` | 20.9 MB | 0.0000 | BENIGN | **DANGEROUS** | CRITICAL | 0 matches | 1,103 ms |
-| `sample2.exe` | ~2 MB | 0.0000 | BENIGN | CLEAN | LOW | 0 matches | 708 ms |
-| `eicar.txt` | ~68 B | 0.0001 | BENIGN | CLEAN | LOW | 0 matches | 133 ms |
-| `procexp64.exe` | ~2 MB | 1.0000 | MALWARE | UNKNOWN | LOW | 1 match | 55 ms |
+| `sample1.exe` | 20.9 MB | 0.0913 | SUSPICIOUS | SUSPICIOUS | CRITICAL | 0 matches | 2,026 ms |
+| `sample2.exe` | ~2 MB | 0.4660 | SUSPICIOUS | SUSPICIOUS | MEDIUM | 0 matches | 402 ms |
+| `eicar.txt` | ~68 B | 0.0040 | BENIGN | CLEAN | LOW | 0 matches | 283 ms |
+| `procexp64.exe` | ~2 MB | 0.0101 | SUSPICIOUS | SUSPICIOUS | HIGH | 1 match | 475 ms |
 
 ### Observaciones sobre los resultados
 
-**sample1.exe**: Divergencia ML vs. Heurística. ML=BENIGN, Heurística=DANGEROUS/CRITICAL. Detectado por Overlay Analysis (98.7% overlay, entropía 7.9987). El modelo ML no detectó la amenaza. La arquitectura multicapa sí.
+**sample1.exe**: Divergencia ML vs. Heurística. ML=SUSPICIOUS (0.0913), Heurística=CRITICAL. Detectado por Overlay Analysis (98.7% overlay, entropía 7.9987). El modelo ML aislado no marca la amenaza; la arquitectura multicapa sí.
 
-**sample2.exe**: Binario .NET. ML=BENIGN. DotNet Analysis detectó ofuscación (Unknown Obfuscator, dotnet_risk_score=28 MEDIUM). El Risk Engine no escaló a DANGEROUS por score insuficiente. Resultado final: CLEAN.
+**sample2.exe**: Binario .NET. ML=SUSPICIOUS (0.4660, contribuye como `ml_onnx` en la correlación). DotNet Analysis detectó ofuscación (Unknown Obfuscator, dotnet_risk_score=28 MEDIUM). Resultado final: SUSPICIOUS/MEDIUM.
 
-**eicar.txt**: Archivo de prueba EICAR estándar (texto, no PE). El extractor usó RAW_FALLBACK. El modelo produjo score=0.0001. YARA no activó. El sistema no detectó EICAR — esto es una limitación documentada: las reglas YARA no incluyen la firma EICAR estándar.
+**eicar.txt**: Archivo de prueba EICAR estándar (texto, no PE). El extractor usó RAW_FALLBACK. El modelo produjo score=0.0040. YARA no activó. El sistema no detectó EICAR — esto es una limitación documentada: las reglas YARA no incluyen la firma EICAR estándar.
 
-**procexp64.exe**: Herramienta legítima (Sysinternals Process Explorer). YARA activó `Keylogger_Generic` → ML score=1.0, label=MALWARE. Este es un **falso positivo documentado**. El `operational_status` quedó en UNKNOWN (condición no cubierta por el Risk Engine para este caso).
+**procexp64.exe**: Herramienta legítima (Sysinternals Process Explorer). YARA activó `Keylogger_Generic` (degradado a SUSPICIOUS por whitelist) y el ML produjo score=0.0101. El falso positivo del modelo anterior (score 1.0) quedó corregido.
 
 ---
 
 ## Métricas del sistema de tests — CALCULADAS
 
-Ejecución real: `python -m pytest tests/ -v` (2026-08-18)
+Ejecución real: `.venv/bin/pytest tests/ -q` (2026-09-11)
 
-| Categoría | Tests | Passed | Failed | Skipped |
-|-----------|-------|--------|--------|---------|
-| Integration (pipeline, supabase) | 10 | 9 | 0 | 1 (accuracy_above_threshold) |
-| Properties (hypothesis) | 14 | 14 | 0 | 0 |
-| Security (backend) | 14 | 13 | 1 | 0 |
-| Unit (engine, extractor, quarantine, etc.) | 37 | 33 | 0 | 4 |
-| Feature tests (extractors, IL, overlay, etc.) | 83 | 81 | 1 | 2 |
-| **Total** | **158** | **151** | **2** | **7** |
+| Total | Passed | Failed | Skipped |
+|-------|--------|--------|---------|
+| **321** | **294** | **0** | **27** |
 
-**Tasa de éxito: 155/158 = 98.1%** (excluyendo skipped que dependen de datos externos)
-
-### Tests fallidos (2 de 158)
-
-1. `TestExpiredJWT::test_expired_token_rejected`
-   - Fallo: `assert 500 == 401`
-   - Causa: `SUPABASE_URL` y `SUPABASE_JWT_SECRET` no configurados en entorno de test → backend retorna 500 en lugar de 401
-   - Impacto: Seguridad — el endpoint no retorna el código HTTP correcto cuando el JWT está expirado y Supabase no está disponible
-
-2. `test_ollama_client_prod_localhost_raises`
-   - Fallo: `DID NOT RAISE RuntimeError`
-   - Causa: La validación de URL de producción no lanza excepción en el entorno actual
-   - Impacto: Bajo — test de configuración de seguridad
-
-### Tests omitidos (skipped)
-
-- `test_accuracy_above_threshold`: requiere `data/test_set/` con datos compatibles con el scaler
-- `TestExtractorDimensions::test_vector_2381_dimensions`: requiere archivo PE real
-- `TestExtractorNonPEErrors::test_non_pe_raises_error`: requiere archivo PE real
-- `TestExtractorNonPEErrors::test_empty_file_raises_error`: requiere fixture PE
-- `TestExtractorRawFallback::test_raw_fallback_not_zero`: requiere fixture PE
+Incluye `tests/test_ember_feature_alignment.py` (7 tests del contrato EMBER v2 + OVERLAY_6). Los skipped dependen de datos externos o componentes opcionales.
 
 ---
 
 ## Métricas de rendimiento — MEDIDAS en ejecuciones reales
 
-| Operación | Medición real |
-|-----------|---------------|
-| Extracción PE_FASTLOAD (sample1.exe, 20.9 MB) | 783.9 ms |
-| Extracción PE normal (sample2.exe, ~2 MB) | 229.2 ms |
-| Extracción RAW_FALLBACK (eicar.txt, 68 B) | 59.0 ms |
-| Pipeline completo sample1.exe (8 fases) | 1,240 ms |
-| Pipeline completo sample2.exe (con IL) | 707 ms |
-| Pipeline procexp64.exe (YARA match, early exit) | 55 ms |
+| Operación | Medición real (2026-09-11) |
+|-----------|----------------------------|
+| Extracción PE_FASTLOAD (sample1.exe, 20.9 MB) | 1,501 ms |
+| Extracción PE normal (sample2.exe, ~2 MB) | 186 ms |
+| Extracción RAW_FALLBACK (eicar.txt, 68 B) | 121 ms |
+| Pipeline completo sample1.exe | 2,026 ms |
+| Pipeline completo sample2.exe (con IL) | 402 ms |
+| Pipeline procexp64.exe (YARA match + whitelist) | 475 ms |
 | Inferencia ONNX (medición directa) | ~15 ms (según documentación) |
 
 ---
@@ -226,15 +191,61 @@ Los siguientes experimentos son necesarios para completar el cuadro de métricas
 
 ### Scaler drift (T-13)
 
-| Campo | Corpus Real (esperado) | Sintético (medido H-02) |
+| Campo | Corpus Real (esperado) | Sintético (medido 2026-09-11) |
 |---|---|---|
 | mean_post | \|mean\| < 2.0 | **21.73** |
-| std_post | 0.5 < std < 2.0 | **112.1** |
+| std_post | 0.5 < std < 2.0 | **114.74** |
 
-> Gap de padding: las 100K muestras del dataset original fueron rellenadas con 2,348 ceros
-> (33→2381). El modelo puede usar ese patrón como atajo discriminativo.
-> Ver limitación L-01 en `13_limitaciones.md`.
+> Nota histórica: el modelo anterior usaba 100K muestras rellenadas con 2,348 ceros
+> (33→2381) como posible atajo discriminativo (ver L-01 en `13_limitaciones.md`).
+> El modelo v1.1.0 no usa padding: entrena sobre 7M muestras SOREL puras.
 
 > ⚠️  `data/test_set/X_test.npy` — **SINTETICO — no usar para métricas de campo**.
 > `docs/academico/figures/fig7_roc_pr_SINTETICO.png` — advertencia: métricas sintéticas.
+
+---
+
+## Modelo v5 (7M) y alineación del extractor — MEDIDO 2026-09-11
+
+En este experimento entreno el MLP `ShadowNetFeatures_v1.1 = EMBER_2381 + OVERLAY_6 = 2387`
+sobre 7,000,000 muestras SOREL (seed 42, split temporal 6.3M/0.7M, 2 épocas, Tesla P100).
+Obtengo, sobre validación temporal 700k (threshold 0.5, sin tuning):
+
+| Época | train_loss | val_loss | val_acc | val F1 | val ROC-AUC | val PR-AUC |
+|---|---|---|---|---|---|---|
+| 1 | 0.1105 | 0.0918 | 96.97% | 0.9520 | 0.9941 | 0.9899 |
+| **2 (best=final)** | **0.0767** | **0.0864** | **97.08%** | **0.9542** | **0.9956** | **0.9927** |
+
+Final: **Accuracy 97.08% · Precision 94.35% · Recall 96.52% · F1 95.42%** ·
+TN 466,525 / FP 12,766 / FN 7,690 / TP 213,019. Fuente: `Model_Collab/Kaggle-MLP-PE/v5/metrics/`.
+
+Al integrar el modelo compruebo que el extractor local pefile NO reproduce el layout
+EMBER: tras el escalado SOREL, ~30 columnas del bloque Header explotan a `|z| ~ 4.3e11`
+(p. ej. índice 653 = ImageBase local `0x140000000` donde SOREL espera un flag `has_*`
+con escala 0.0125) y el MLP se satura a `score = 0.0` degenerado. El modelo antiguo
+sufre lo mismo con el extractor actual, así que es un defecto preexistente del
+extractor, no del reentrenamiento.
+
+Implemento `extractors/ember_features.py` (adaptación original del layout público EMBER v2:
+histogramas normalizados, `FeatureHasher`, `DataDirectories(30)`, parser LIEF) y lo conecto
+como ruta primaria del extractor, conservando `RAW_FALLBACK` como contingencia. Tras el fix,
+mido en el corpus local:
+
+| Archivo | max\|z\| | ML score (nuevo) | ML score (antes) |
+|---|---|---|---|
+| `sample1.exe` | 48.31 | 0.0913 | 0.0 (saturado) |
+| `sample2.exe` | 48.31 | 0.4660 | 0.0 (saturado) |
+| `procexp64.exe` | 48.31 | 0.0101 | 0.0 (saturado) |
+
+Verifico el cross-check contra vectores EMBER almacenados por SOREL
+(`scripts/compare_ember_vs_sorel.py`, N=5 binarios): `strings/general/imports/exports/
+datadirectories` exactos (0 diffs); histogramas solo redondeo float (max ~2e-5);
+`header` 5/62 y `section` 5-7/255 con diff máxima 2.0 en dims hasheadas, atribuida a
+nombres de enums LIEF 0.9 vs 1.0 y a resolución de entry (RVA vs offset). Sin explosiones,
+sin cambios de orden, sin bloques faltantes.
+
+Limitación conocida: los `|z|>10` restantes (máx. 48.31, <0.4% de dims) son buckets
+hasheados sparse legítimos (±1 en buckets que SOREL casi no activa), no un mismatch de
+unidades; el modelo los tolera sin saturarse. `tests/test_ember_feature_alignment.py`
+fija este contrato (max|z| < 100, <1% dims con |z|>10, sin recortes).
 

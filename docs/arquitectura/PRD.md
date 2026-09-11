@@ -165,9 +165,9 @@ backend/
 
 ### 5.1 Estado Actual
 
-- Implementado en **PyTorch**
-- Dataset: **SOREL**
-- Entrenamiento con **Early Stopping**
+- Implementado en **PyTorch** (MLP `2387→512→256→128→1`, v1.1.0)
+- Dataset: **SOREL-20M** (selección 7M, seed 42; split temporal 6.3M/0.7M)
+- Entrenamiento en 2 épocas fijas (sin early stopping), Adam lr=1e-3, `BCEWithLogitsLoss`
 
 ### 5.2 Requisitos
 
