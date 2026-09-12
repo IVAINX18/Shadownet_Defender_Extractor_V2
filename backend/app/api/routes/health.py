@@ -58,9 +58,25 @@ def _check_yara() -> str:
         return "unavailable"
 
 
+def _supabase_health_key() -> str:
+    """
+    Resuelve la key de Supabase usando las variables reales del proyecto.
+
+    El proyecto no usa SUPABASE_KEY como variable primaria: la persistencia
+    lee SUPABASE_ANON_KEY (preferente) y SUPABASE_SERVICE_ROLE_KEY. Se respeta
+    ese orden y se conserva SUPABASE_KEY únicamente como fallback legacy.
+    Devuelve la primera key presente o cadena vacía si no hay ninguna.
+    """
+    for var_name in ("SUPABASE_ANON_KEY", "SUPABASE_KEY", "SUPABASE_SERVICE_ROLE_KEY"):
+        value = os.getenv(var_name, "").strip()
+        if value:
+            return value
+    return ""
+
+
 def _check_supabase() -> str:
     """Verifica conexión a Supabase: 'connected' | 'disconnected' | 'not_configured'."""
-    supabase_key = os.getenv("SUPABASE_KEY", "").strip()
+    supabase_key = _supabase_health_key()
     if not supabase_key:
         return "not_configured"
     try:

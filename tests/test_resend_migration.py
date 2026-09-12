@@ -194,8 +194,9 @@ def test_criterio6_idempotencia_sha256():
         assert res2.get("deduplicated") is True
         assert "Duplicado" in res2.get("reason", "")
 
-    # Tras ventana expirada debe permitir de nuevo (simular tiempo)
-    _idempotency_cache[sha] = time.time() - 70
+    # Tras ventana expirada debe permitir de nuevo (simular tiempo).
+    # La clave es compuesta (sha256, user_id); _base_record usa user_id="user-001".
+    _idempotency_cache[(sha, "user-001")] = time.time() - 70
     with patch("backend.app.integrations.supabase_client._get_supabase_client") as mock_client:
         mock_table = MagicMock()
         mock_table.insert.return_value.execute.return_value.data = [{"id": "uuid-3"}]

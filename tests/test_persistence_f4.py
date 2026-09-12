@@ -93,11 +93,61 @@ def test_evidence_storage_jsonb():
 def test_idempotency_dedup():
     from backend.app.integrations.supabase_client import _idempotency_cache, _mark_idempotency
     _idempotency_cache.clear()
-    _mark_idempotency("abc123")
+    _mark_idempotency("abc123", "user-x")
     with patch("backend.app.integrations.supabase_client._get_supabase_client") as mock_get:
-        result = save_scan({"file_name": "a", "sha256": "abc123"})
+        result = save_scan({"file_name": "a", "sha256": "abc123", "user_id": "user-x"})
         assert result.get("deduplicated") is True
         mock_get.assert_not_called()
+    _idempotency_cache.clear()
+
+
+def test_idempotency_same_sha_same_user_is_deduplicated():
+    """Caso A: (sha256 A, user 1) seguido del mismo par → deduplicado."""
+    from backend.app.integrations.supabase_client import save_scan, _idempotency_cache
+    _idempotency_cache.clear()
+    data = {
+        "file_name": "a.exe", "sha256": "A" * 64, "user_id": "user-1",
+        "result": "benign",
+    }
+    mock_client = MagicMock()
+    mock_client.table.return_value.insert.return_value.execute.return_value = MagicMock(
+        data=[{"id": "1"}]
+    )
+    with patch(
+        "backend.app.integrations.supabase_client._get_supabase_client",
+        return_value=mock_client,
+    ):
+        first = save_scan(dict(data))
+        second = save_scan(dict(data))
+    assert first.get("saved") is True
+    assert not first.get("deduplicated")
+    assert second.get("deduplicated") is True
+    _idempotency_cache.clear()
+
+
+def test_idempotency_same_sha_different_user_is_independent():
+    """Caso B: (sha256 A, user 1) y (sha256 A, user 2) son registros independientes."""
+    from backend.app.integrations.supabase_client import save_scan, _idempotency_cache
+    _idempotency_cache.clear()
+    mock_client = MagicMock()
+    mock_client.table.return_value.insert.return_value.execute.return_value = MagicMock(
+        data=[{"id": "1"}]
+    )
+    with patch(
+        "backend.app.integrations.supabase_client._get_supabase_client",
+        return_value=mock_client,
+    ):
+        user1 = save_scan(
+            {"file_name": "a.exe", "sha256": "B" * 64, "user_id": "user-1", "result": "benign"}
+        )
+        user2 = save_scan(
+            {"file_name": "a.exe", "sha256": "B" * 64, "user_id": "user-2", "result": "benign"}
+        )
+    assert user1.get("saved") is True
+    assert not user1.get("deduplicated")
+    assert user2.get("saved") is True
+    assert not user2.get("deduplicated"), "usuario distinto no debe deduplicarse"
+    _idempotency_cache.clear()
 
 
 def test_detection_not_changed_by_persistence_failure():

@@ -22,7 +22,7 @@ import time
 from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger("backend.supabase")
 
@@ -178,21 +178,43 @@ def _get_supabase_client(user_jwt: Optional[str] = None) -> Any:
 
 
 # ---------------------------------------------------------------------------
-# 10.3 — Caché de idempotencia por sha256 (en memoria, ventana 60s)
+# 10.3 — Caché de idempotencia por (sha256, user_id) (en memoria, ventana 60s)
 # ---------------------------------------------------------------------------
+# La clave compuesta replica la restricción UNIQUE (sha256, user_id) de la
+# tabla scan_results (uq_scan_results_sha_user). Es indispensable que ambos
+# componentes formen la clave: el mismo archivo escaneado por dos usuarios
+# distintos son registros independientes y NO deben deduplicarse entre sí.
+IdempotencyKey = Tuple[str, str]
 
-_idempotency_cache: Dict[str, float] = {}
+_idempotency_cache: Dict[IdempotencyKey, float] = {}
 _IDEMPOTENCY_WINDOW_SECONDS = 60
 
 
-def _check_idempotency(sha256: Optional[str]) -> Optional[str]:
+def _idempotency_key(
+    sha256: Optional[str], user_id: Optional[str]
+) -> Optional[IdempotencyKey]:
+    """Construye la clave de idempotencia (sha256, user_id).
+
+    Devuelve None cuando no hay sha256 (sin él no es posible deduplicar).
+    El user_id ausente se normaliza a cadena vacía para que la clave siga
+    siendo una tupla estable y tipada.
     """
-    Verifica si un sha256 ya fue insertado en los últimos 60 segundos.
+    if not sha256:
+        return None
+    return (str(sha256), str(user_id or ""))
+
+
+def _check_idempotency(
+    sha256: Optional[str], user_id: Optional[str]
+) -> Optional[str]:
+    """
+    Verifica si un (sha256, user_id) ya fue insertado en los últimos 60 segundos.
 
     Returns:
         None si la inserción es segura, o un mensaje indicando duplicado.
     """
-    if not sha256:
+    key = _idempotency_key(sha256, user_id)
+    if key is None:
         return None  # Sin sha256 no podemos deduplicar
 
     now = time.time()
@@ -202,17 +224,21 @@ def _check_idempotency(sha256: Optional[str]) -> Optional[str]:
     for k in expired:
         del _idempotency_cache[k]
 
-    if sha256 in _idempotency_cache:
-        elapsed = now - _idempotency_cache[sha256]
-        return f"Duplicado: sha256={sha256[:16]}... insertado hace {elapsed:.1f}s"
+    if key in _idempotency_cache:
+        elapsed = now - _idempotency_cache[key]
+        return (
+            f"Duplicado: sha256={key[0][:16]}... user_id={key[1] or 'unknown'} "
+            f"insertado hace {elapsed:.1f}s"
+        )
 
     return None
 
 
-def _mark_idempotency(sha256: Optional[str]) -> None:
-    """Marca un sha256 como insertado para la ventana de idempotencia."""
-    if sha256:
-        _idempotency_cache[sha256] = time.time()
+def _mark_idempotency(sha256: Optional[str], user_id: Optional[str]) -> None:
+    """Marca un (sha256, user_id) como insertado para la ventana de idempotencia."""
+    key = _idempotency_key(sha256, user_id)
+    if key is not None:
+        _idempotency_cache[key] = time.time()
 
 
 def _classify_supabase_error(exc: Exception) -> str:
@@ -394,9 +420,12 @@ def save_scan(data: Dict[str, Any], user_jwt: Optional[str] = None) -> Dict[str,
         Diccionario con la respuesta de Supabase (registro insertado).
     """
     sha256 = data.get("sha256")
+    # user_id forma parte de la clave de idempotencia (UNIQUE sha256+user_id).
+    # Se toma del payload (derivado del JWT validado aguas arriba).
+    user_id = data.get("user_id")
 
-    # 10.3 — Verificar idempotencia por sha256
-    dup_msg = _check_idempotency(sha256)
+    # 10.3 — Verificar idempotencia por (sha256, user_id)
+    dup_msg = _check_idempotency(sha256, user_id)
     if dup_msg:
         logger.info("Idempotencia: %s", dup_msg)
         return {"saved": True, "reason": dup_msg, "deduplicated": True}
@@ -477,8 +506,8 @@ def save_scan(data: Dict[str, Any], user_jwt: Optional[str] = None) -> Dict[str,
         response = adaptive["response"]
         stripped = adaptive["stripped_columns"]
 
-        # 10.3 — Marcar sha256 como insertado
-        _mark_idempotency(sha256)
+        # 10.3 — Marcar (sha256, user_id) como insertado
+        _mark_idempotency(sha256, user_id)
 
         if stripped:
             logger.warning(
@@ -529,7 +558,7 @@ def save_scan(data: Dict[str, Any], user_jwt: Optional[str] = None) -> Dict[str,
         if category == "unique_violation":
             # UNIQUE(sha256,user_id) → idempotencia: mismo archivo ya guardado
             # No es error, es deduplicación lógica; no encolar
-            _mark_idempotency(sha256)
+            _mark_idempotency(sha256, user_id)
             logger.info("UNIQUE violation (sha256,user_id) → deduplicado: sha256=%s", (sha256 or "N/A")[:16])
             return {"saved": True, "reason": "unique_violation deduplicated", "deduplicated": True, "category": category}
         # PGRST204 schema mismatch residual: _insert_adaptive ya hizo stripping;
@@ -546,7 +575,7 @@ def save_scan(data: Dict[str, Any], user_jwt: Optional[str] = None) -> Dict[str,
                 except RuntimeError:
                     client = _get_supabase_client(user_jwt=user_jwt)
                 client.table(SUPABASE_TABLE).insert(_safe_json(minimal)).execute()
-                _mark_idempotency(sha256)
+                _mark_idempotency(sha256, user_id)
                 logger.info("Guardado minimal exitoso tras PGRST204")
                 return {"saved": True, "record": minimal, "recovered_from": "PGRST204"}
             except Exception as exc2:

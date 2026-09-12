@@ -14,7 +14,9 @@ lief>=0.13
 
 # --- Inferencia numérica y ML ---
 numpy>=1.24.0
-scikit-learn>=1.3.0
+# Fijado a la version con la que se serializaron y validaron los scalers
+# StandardScaler de produccion (evita drift al unpickle: sklearn 1.6.1).
+scikit-learn==1.6.1
 onnx>=1.15.0
 onnxruntime>=1.16.0
 joblib>=1.3.0
